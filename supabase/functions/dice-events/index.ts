@@ -64,17 +64,6 @@ async function fetchAllViewerEvents(apiKey: string) {
   return { data: { viewer: { events: { totalCount, edges: allEdges } } } };
 }
 
-async function introspectDiceSchema(apiKey: string) {
-  const query = `{
-    operatorsDateInput: __type(name: "OperatorsDateInput") {
-      name
-      inputFields { name type { name kind ofType { name kind } } }
-    }
-  }`;
-  const { data } = await executeDiceQuery(query, apiKey);
-  return data;
-}
-
 async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Record<string, number> | null> {
   try {
     // Calculate the UTC equivalent of midnight Italian time (CET=UTC+1, CEST=UTC+2)
