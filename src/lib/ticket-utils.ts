@@ -323,7 +323,7 @@ export function getTodayPresenzeBreakdown(
   const details: TodaySalesEventDetail[] = [];
 
   for (const event of edition.events) {
-    const refSold = refMap.get(event.id) ?? event.ticketsSold;
+    const refSold = refMap.get(event.id) ?? 0;
     const diffToday = Math.max(0, event.ticketsSold - refSold);
     if (diffToday > 0) {
       const days = getEventDays(event, edition.key);
