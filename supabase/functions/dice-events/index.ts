@@ -64,55 +64,30 @@ async function fetchAllViewerEvents(apiKey: string) {
   return { data: { viewer: { events: { totalCount, edges: allEdges } } } };
 }
 
-async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Map<string, number> | null> {
+async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Record<string, number> | null> {
   try {
-    const todayStart = `${todayISO}T00:00`;
+    // Calculate the UTC equivalent of midnight Italian time (CET=UTC+1, CEST=UTC+2)
+    // Create a date at midnight in Europe/Rome, then get its UTC representation
+    const midnightLocal = new Date(`${todayISO}T00:00:00`);
+    // Get the timezone offset for Rome (we approximate: March = CET = UTC+1)
+    // More robust: use the actual offset
+    const romeDate = new Date(midnightLocal.toLocaleString('en-US', { timeZone: 'Europe/Rome' }));
+    const utcDate = new Date(midnightLocal.toLocaleString('en-US', { timeZone: 'UTC' }));
+    const offsetMs = utcDate.getTime() - romeDate.getTime();
+    const todayStartUTC = new Date(midnightLocal.getTime() + offsetMs).toISOString();
     
-    // First, introspect the Order and Ticket types to find the right fields
-    const introQuery = `{
-      viewer {
-        orders(first: 1, where: { purchasedAt: { gte: "${todayStart}" } }) {
-          totalCount
-          edges {
-            node {
-              id
-              purchasedAt
-            }
-          }
-        }
-      }
-    }`;
-
-    const { response: introResp, data: introData } = await executeDiceQuery(introQuery, apiKey);
-    if (!introResp.ok) {
-      console.error('Orders introspection failed:', introResp.status);
-      return null;
-    }
-
-    const ordersInfo = introData?.data?.viewer?.orders;
-    if (!ordersInfo) {
-      console.error('Orders introspection error:', JSON.stringify(introData?.errors || introData));
-      return null;
-    }
-
-    const totalOrders = ordersInfo.totalCount || 0;
-    console.log(`Found ${totalOrders} orders purchased today`);
-
-    if (totalOrders === 0) {
-      return new Map<string, number>();
-    }
-
-    // Fetch orders with ticket details
-    const countsMap = new Map<string, number>();
+    console.log(`Today filter: todayISO=${todayISO}, todayStartUTC=${todayStartUTC}`);
+    
+    const counts: Record<string, number> = {};
     let hasNextPage = true;
     let afterCursor: string | null = null;
 
     while (hasNextPage) {
       const afterClause = afterCursor ? `, after: "${afterCursor}"` : '';
-      // Query order-level event info since Ticket type doesn't have event field
       const query = `{
         viewer {
-          orders(first: 50${afterClause}, where: { purchasedAt: { gte: "${todayStart}" } }) {
+          orders(first: 50${afterClause}, where: { purchasedAt: { gte: "${todayStartUTC}" } }) {
+            totalCount
             pageInfo { hasNextPage endCursor }
             edges {
               node {
@@ -126,22 +101,16 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
       }`;
 
       const { response, data } = await executeDiceQuery(query, apiKey);
-      if (!response.ok) {
-        console.error('Today orders detail query failed:', response.status);
-        return null;
-      }
+      if (!response.ok) return null;
 
       const ordersNode = data?.data?.viewer?.orders;
-      if (!ordersNode) {
-        console.error('Today orders detail error:', JSON.stringify(data?.errors || data));
-        return null;
-      }
+      if (!ordersNode) return null;
 
-      for (const orderEdge of (ordersNode.edges || [])) {
-        const eventId = orderEdge.node?.event?.id;
-        const qty = orderEdge.node?.quantity || 1;
+      for (const edge of (ordersNode.edges || [])) {
+        const eventId = edge.node?.event?.id;
+        const qty = edge.node?.quantity || 1;
         if (eventId) {
-          countsMap.set(eventId, (countsMap.get(eventId) || 0) + qty);
+          counts[eventId] = (counts[eventId] || 0) + qty;
         }
       }
 
@@ -150,7 +119,8 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
       if (!afterCursor) hasNextPage = false;
     }
 
-    return countsMap;
+    console.log(`Today orders counts:`, JSON.stringify(counts));
+    return counts;
   } catch (err) {
     console.error('fetchTodayTicketCounts error:', err);
     return null;
@@ -210,7 +180,11 @@ Deno.serve(async (req) => {
           yesterdayBaseline = ydData;
         }
 
-        // todayTicketCounts left as null — delta is computed client-side from snapshots
+        // Get today's ticket counts from DICE orders API (timezone-aware)
+        const todayCounts = await fetchTodayTicketCounts(apiKey, today);
+        if (todayCounts && Object.keys(todayCounts).length > 0) {
+          todayTicketCounts = todayCounts;
+        }
 
         return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline, todayTicketCounts }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
