@@ -134,11 +134,11 @@
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(220, 90%, 52%), hsl(220, 90%, 65%));
+    background: linear-gradient(135deg, hsl(220, 65%, 18%), hsl(220, 55%, 30%));
   }
 
   .gradient-gold {
-    background: linear-gradient(135deg, hsl(42, 95%, 55%), hsl(35, 100%, 60%));
+    background: linear-gradient(135deg, hsl(220, 40%, 50%), hsl(220, 50%, 40%));
   }
 
   .soft-card {
