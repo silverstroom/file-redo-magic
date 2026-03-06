@@ -6,58 +6,58 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 220 15% 12%;
+    --background: 220 20% 97%;
+    --foreground: 230 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 12%;
+    --card-foreground: 230 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 12%;
+    --popover-foreground: 230 25% 12%;
 
-    --primary: 220 65% 18%;
+    --primary: 250 85% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 10% 94%;
-    --secondary-foreground: 220 15% 12%;
+    --secondary: 180 60% 48%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 10% 95%;
-    --muted-foreground: 220 8% 46%;
+    --muted: 220 15% 93%;
+    --muted-foreground: 220 10% 42%;
 
-    --accent: 220 10% 94%;
-    --accent-foreground: 220 15% 12%;
+    --accent: 340 75% 55%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 10% 91%;
-    --input: 220 10% 91%;
-    --ring: 220 65% 18%;
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 250 85% 60%;
 
     --radius: 0.75rem;
 
-    --card-orange: 30 30% 96%;
-    --card-blue: 220 30% 96%;
-    --card-mint: 160 20% 95%;
-    --card-pink: 340 20% 96%;
-    --card-yellow: 45 30% 95%;
-    --card-purple: 280 20% 96%;
+    --card-orange: 25 90% 95%;
+    --card-blue: 250 60% 96%;
+    --card-mint: 170 50% 93%;
+    --card-pink: 340 60% 95%;
+    --card-yellow: 45 80% 93%;
+    --card-purple: 280 50% 95%;
 
-    --chart-day1: 220 65% 30%;
-    --chart-day2: 220 40% 50%;
-    --chart-day3: 220 20% 65%;
-    --chart-day4: 160 30% 45%;
-    --chart-day5: 30 40% 50%;
-    --chart-total: 220 15% 20%;
+    --chart-day1: 250 85% 60%;
+    --chart-day2: 180 60% 48%;
+    --chart-day3: 340 75% 55%;
+    --chart-day4: 45 85% 50%;
+    --chart-day5: 150 60% 42%;
+    --chart-total: 230 25% 20%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 15% 12%;
-    --sidebar-primary: 220 65% 18%;
+    --sidebar-foreground: 230 25% 12%;
+    --sidebar-primary: 250 85% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 10% 95%;
-    --sidebar-accent-foreground: 220 15% 12%;
-    --sidebar-border: 220 10% 91%;
-    --sidebar-ring: 220 65% 18%;
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 230 25% 12%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 250 85% 60%;
 
     --font-display: 'Space Grotesk', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
