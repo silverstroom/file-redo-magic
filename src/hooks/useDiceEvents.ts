@@ -11,6 +11,7 @@ export interface SnapshotEntry {
 export interface SnapshotData {
   todayBaseline: SnapshotEntry[] | null;
   yesterdayBaseline: SnapshotEntry[] | null;
+  todayTicketCounts: Record<string, number> | null;
 }
 
 export function useDiceEvents() {
