@@ -128,7 +128,7 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-base font-medium text-muted-foreground">{getGreeting()} · {formatToday()}</p>
-            <img src={logoBlack} alt="Color Fest" className="h-8 mt-1" />
+            <img src={logoBlack} alt="Color Fest" className="h-12 mt-1" />
           </div>
           <Button
             onClick={fetchEvents}
@@ -160,6 +160,8 @@ const Index = () => {
       </header>
 
       <main className="px-5 space-y-5">
+        {events.length > 0 && <WeeklySalesCard events={events} />}
+
         {error && (
           <div className="soft-card-pink p-4">
             <p className="text-sm text-destructive font-medium">Errore: {error}</p>
@@ -224,7 +226,7 @@ const Index = () => {
               ))}
             </div>
 
-            {isLatestEdition && <WeeklySalesCard events={selectedEdition.events} />}
+            
 
             <DayBarChart distribution={distribution} />
 
