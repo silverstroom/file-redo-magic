@@ -66,8 +66,8 @@ async function fetchAllViewerEvents(apiKey: string) {
 
 async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Map<string, number> | null> {
   try {
-    const todayStart = `${todayISO}T00:00:00+01:00`;
-    const allEdges: any[] = [];
+    const todayStart = `${todayISO}T00:00`;
+    const countsMap = new Map<string, number>();
     let hasNextPage = true;
     let afterCursor: string | null = null;
 
@@ -75,12 +75,17 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
       const afterClause = afterCursor ? `, after: "${afterCursor}"` : '';
       const query = `{
         viewer {
-          events(first: 50${afterClause}) {
+          orders(first: 50${afterClause}, where: { purchasedAt: { gte: "${todayStart}" } }) {
             pageInfo { hasNextPage endCursor }
             edges {
               node {
-                id
-                tickets(first: 0, filter: { purchasedAfter: "${todayStart}" }) { totalCount }
+                tickets {
+                  edges {
+                    node {
+                      event { id }
+                    }
+                  }
+                }
               }
             }
           }
@@ -89,30 +94,32 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
 
       const { response, data } = await executeDiceQuery(query, apiKey);
       if (!response.ok) {
-        console.error('Today tickets query failed:', response.status);
+        console.error('Today orders query failed:', response.status);
         return null;
       }
 
-      const eventsNode = data?.data?.viewer?.events;
-      if (!eventsNode) {
-        console.error('Today tickets query returned unexpected structure:', JSON.stringify(data?.errors || data));
+      const ordersNode = data?.data?.viewer?.orders;
+      if (!ordersNode) {
+        console.error('Today orders query error:', JSON.stringify(data?.errors || data));
         return null;
       }
 
-      const edges = eventsNode.edges || [];
-      allEdges.push(...edges);
-      hasNextPage = Boolean(eventsNode.pageInfo?.hasNextPage);
-      afterCursor = eventsNode.pageInfo?.endCursor || null;
+      for (const orderEdge of (ordersNode.edges || [])) {
+        const tickets = orderEdge.node?.tickets?.edges || [];
+        for (const ticketEdge of tickets) {
+          const eventId = ticketEdge.node?.event?.id;
+          if (eventId) {
+            countsMap.set(eventId, (countsMap.get(eventId) || 0) + 1);
+          }
+        }
+      }
+
+      hasNextPage = Boolean(ordersNode.pageInfo?.hasNextPage);
+      afterCursor = ordersNode.pageInfo?.endCursor || null;
       if (!afterCursor) hasNextPage = false;
     }
 
-    const map = new Map<string, number>();
-    for (const edge of allEdges) {
-      const id = edge.node?.id;
-      const count = edge.node?.tickets?.totalCount ?? 0;
-      if (id) map.set(id, count);
-    }
-    return map;
+    return countsMap;
   } catch (err) {
     console.error('fetchTodayTicketCounts error:', err);
     return null;
