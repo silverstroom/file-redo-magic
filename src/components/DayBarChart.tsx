@@ -81,7 +81,7 @@ export function DayBarChart({ distribution }: DayBarChartProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-5">
         {distribution.map((d, i) => {
           const cap = capacities[d.date] || 2000;
           const sold = d.count;
@@ -95,16 +95,16 @@ export function DayBarChart({ distribution }: DayBarChartProps) {
 
           return (
             <div key={d.date} className="flex flex-col items-center">
-              <p className="text-sm font-bold mb-2">{d.day}</p>
-              <div className="h-[160px] w-[160px]">
+              <p className="text-xs sm:text-sm font-bold mb-1 sm:mb-2">{d.day}</p>
+              <div className="h-[100px] w-[100px] sm:h-[160px] sm:w-[160px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={72}
+                      innerRadius="60%"
+                      outerRadius="85%"
                       startAngle={90}
                       endAngle={-270}
                       dataKey="value"
@@ -117,7 +117,7 @@ export function DayBarChart({ distribution }: DayBarChartProps) {
                         position="center"
                         style={{
                           fill: 'hsl(220, 25%, 10%)',
-                          fontSize: '20px',
+                          fontSize: '16px',
                           fontWeight: 800,
                           fontFamily: 'JetBrains Mono',
                         }}
@@ -126,7 +126,7 @@ export function DayBarChart({ distribution }: DayBarChartProps) {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <p className="text-xs font-mono text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs font-mono text-muted-foreground mt-1">
                 <span className="font-bold text-foreground">{sold.toLocaleString('it-IT')}</span>
                 {' / '}
                 {cap.toLocaleString('it-IT')}
