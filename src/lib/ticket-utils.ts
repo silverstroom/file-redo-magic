@@ -263,17 +263,22 @@ export function getTodaySalesBreakdown(
   edition: FestivalEdition,
   todayBaseline: { event_id: string; tickets_sold: number }[] | null,
   yesterdayBaseline?: { event_id: string; tickets_sold: number }[] | null,
+  todayTicketCounts?: Record<string, number> | null,
 ): TodaySalesEventDetail[] {
-  const refMap = yesterdayBaseline && yesterdayBaseline.length > 0
-    ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : todayBaseline && todayBaseline.length > 0
-    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : new Map<string, number>();
+  const useDiceCounts = todayTicketCounts && Object.keys(todayTicketCounts).length > 0;
+  const refMap = !useDiceCounts
+    ? (yesterdayBaseline && yesterdayBaseline.length > 0
+      ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
+      : todayBaseline && todayBaseline.length > 0
+      ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
+      : new Map<string, number>())
+    : null;
   const details: TodaySalesEventDetail[] = [];
 
   for (const event of edition.events) {
-    const refSold = refMap.get(event.id) ?? 0;
-    const diffToday = Math.max(0, event.ticketsSold - refSold);
+    const diffToday = useDiceCounts
+      ? (todayTicketCounts![event.id] ?? 0)
+      : Math.max(0, event.ticketsSold - (refMap!.get(event.id) ?? 0));
     if (diffToday > 0) {
       details.push({ eventName: event.name, soldToday: diffToday });
     }
