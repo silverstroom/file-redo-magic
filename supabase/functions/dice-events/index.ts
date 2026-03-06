@@ -65,25 +65,10 @@ async function fetchAllViewerEvents(apiKey: string) {
 }
 
 async function introspectDiceSchema(apiKey: string) {
-  // Introspect the viewer.orders args and OrderWhereInput type
   const query = `{
-    viewerType: __type(name: "Viewer") {
-      fields {
-        name
-        args { name type { name kind ofType { name kind ofType { name kind } } } }
-      }
-    }
-    orderWhereInput: __type(name: "OrderWhereInput") {
-      name
-      inputFields { name type { name kind ofType { name kind ofType { name } } } }
-    }
-    orderSortInput: __type(name: "OrderSortInput") {
+    operatorsDateInput: __type(name: "OperatorsDateInput") {
       name
       inputFields { name type { name kind ofType { name kind } } }
-    }
-    orderSortField: __type(name: "OrderSortField") {
-      name
-      enumValues { name }
     }
   }`;
   const { data } = await executeDiceQuery(query, apiKey);
