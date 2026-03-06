@@ -222,9 +222,11 @@ export function getTodaySalesPerDay(
   yesterdayBaseline: { event_id: string; tickets_sold: number }[] | null,
 ): TodaySalesPerDay[] {
   const days = getEditionDays(edition);
-  // Use yesterdayBaseline if available; otherwise baseline = 0 (show all as "today")
+  // Priority: yesterdayBaseline > todayBaseline (first snapshot today) > empty (no tracking yet)
   const referenceMap = yesterdayBaseline && yesterdayBaseline.length > 0
     ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
+    : todayBaseline && todayBaseline.length > 0
+    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
     : new Map<string, number>();
 
   const soldTodayPerDay: Record<string, number> = {};
