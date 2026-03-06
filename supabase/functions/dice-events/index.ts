@@ -64,6 +64,61 @@ async function fetchAllViewerEvents(apiKey: string) {
   return { data: { viewer: { events: { totalCount, edges: allEdges } } } };
 }
 
+async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Map<string, number> | null> {
+  try {
+    const todayStart = `${todayISO}T00:00:00+01:00`;
+    const allEdges: any[] = [];
+    let hasNextPage = true;
+    let afterCursor: string | null = null;
+
+    while (hasNextPage) {
+      const afterClause = afterCursor ? `, after: "${afterCursor}"` : '';
+      const query = `{
+        viewer {
+          events(first: 50${afterClause}) {
+            pageInfo { hasNextPage endCursor }
+            edges {
+              node {
+                id
+                tickets(first: 0, filter: { purchasedAfter: "${todayStart}" }) { totalCount }
+              }
+            }
+          }
+        }
+      }`;
+
+      const { response, data } = await executeDiceQuery(query, apiKey);
+      if (!response.ok) {
+        console.error('Today tickets query failed:', response.status);
+        return null;
+      }
+
+      const eventsNode = data?.data?.viewer?.events;
+      if (!eventsNode) {
+        console.error('Today tickets query returned unexpected structure:', JSON.stringify(data?.errors || data));
+        return null;
+      }
+
+      const edges = eventsNode.edges || [];
+      allEdges.push(...edges);
+      hasNextPage = Boolean(eventsNode.pageInfo?.hasNextPage);
+      afterCursor = eventsNode.pageInfo?.endCursor || null;
+      if (!afterCursor) hasNextPage = false;
+    }
+
+    const map = new Map<string, number>();
+    for (const edge of allEdges) {
+      const id = edge.node?.id;
+      const count = edge.node?.tickets?.totalCount ?? 0;
+      if (id) map.set(id, count);
+    }
+    return map;
+  } catch (err) {
+    console.error('fetchTodayTicketCounts error:', err);
+    return null;
+  }
+}
+
 function getTodayISO(): string {
   const now = new Date();
   return now.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
