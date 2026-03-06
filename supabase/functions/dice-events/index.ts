@@ -147,6 +147,7 @@ Deno.serve(async (req) => {
       }
 
       let todayBaseline: any[] | null = null;
+      let todayTicketCounts: Record<string, number> | null = null;
       try {
         const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
         const today = getTodayISO();
@@ -171,11 +172,23 @@ Deno.serve(async (req) => {
           yesterdayBaseline = ydData;
         }
 
-        return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline }),
+        // Query DICE API for today's actual ticket sales (using purchasedAfter filter)
+        const todayCountsMap = await fetchTodayTicketCounts(apiKey, today);
+        if (todayCountsMap) {
+          const counts: Record<string, number> = {};
+          for (const [eventId, count] of todayCountsMap) {
+            if (count > 0) counts[eventId] = count;
+          }
+          if (Object.keys(counts).length > 0) {
+            todayTicketCounts = counts;
+          }
+        }
+
+        return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline, todayTicketCounts }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } catch (snapErr) {
         console.error('Snapshot error:', snapErr);
-        return new Response(JSON.stringify({ success: true, data, todayBaseline: null, yesterdayBaseline: null }),
+        return new Response(JSON.stringify({ success: true, data, todayBaseline: null, yesterdayBaseline: null, todayTicketCounts: null }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     }
