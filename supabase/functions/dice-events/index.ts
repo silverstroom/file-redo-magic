@@ -64,97 +64,106 @@ async function fetchAllViewerEvents(apiKey: string) {
   return { data: { viewer: { events: { totalCount, edges: allEdges } } } };
 }
 
-async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Map<string, number> | null> {
+async function introspectDiceSchema(apiKey: string) {
+  // Introspect the Order type and viewer.orders connection args
+  const query = `{
+    __type(name: "OrdersConnection") {
+      name
+      fields { name type { name kind ofType { name kind } } }
+    }
+    orderType: __type(name: "Order") {
+      name
+      fields { name type { name kind ofType { name kind } } }
+    }
+    viewerType: __type(name: "Viewer") {
+      name
+      fields(includeDeprecated: true) {
+        name
+        args { name type { name kind ofType { name kind ofType { name kind } } } }
+      }
+    }
+  }`;
+  const { data } = await executeDiceQuery(query, apiKey);
+  return data;
+}
+
+async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Record<string, number> | null> {
   try {
-    const todayStart = `${todayISO}T00:00`;
-    
-    // First, introspect the Order and Ticket types to find the right fields
-    const introQuery = `{
+    // First try: query all orders without filter, check recent ones
+    const query = `{
       viewer {
-        orders(first: 1, where: { purchasedAt: { gte: "${todayStart}" } }) {
+        orders(first: 10, sort: { field: PURCHASED_AT, order: DESC }) {
           totalCount
           edges {
             node {
               id
               purchasedAt
+              event { id name }
+              quantity
             }
           }
         }
       }
     }`;
 
-    const { response: introResp, data: introData } = await executeDiceQuery(introQuery, apiKey);
-    if (!introResp.ok) {
-      console.error('Orders introspection failed:', introResp.status);
+    const { response, data } = await executeDiceQuery(query, apiKey);
+    if (!response.ok) {
+      console.error('Orders query failed:', response.status);
       return null;
     }
 
-    const ordersInfo = introData?.data?.viewer?.orders;
-    if (!ordersInfo) {
-      console.error('Orders introspection error:', JSON.stringify(introData?.errors || introData));
-      return null;
-    }
-
-    const totalOrders = ordersInfo.totalCount || 0;
-    console.log(`Found ${totalOrders} orders purchased today`);
-
-    if (totalOrders === 0) {
-      return new Map<string, number>();
-    }
-
-    // Fetch orders with ticket details
-    const countsMap = new Map<string, number>();
-    let hasNextPage = true;
-    let afterCursor: string | null = null;
-
-    while (hasNextPage) {
-      const afterClause = afterCursor ? `, after: "${afterCursor}"` : '';
-      // Query order-level event info since Ticket type doesn't have event field
-      const query = `{
+    const ordersNode = data?.data?.viewer?.orders;
+    if (!ordersNode) {
+      // Try without sort
+      const query2 = `{
         viewer {
-          orders(first: 50${afterClause}, where: { purchasedAt: { gte: "${todayStart}" } }) {
-            pageInfo { hasNextPage endCursor }
+          orders(first: 10) {
+            totalCount
             edges {
               node {
                 id
-                event { id }
+                purchasedAt
+                event { id name }
                 quantity
               }
             }
           }
         }
       }`;
-
-      const { response, data } = await executeDiceQuery(query, apiKey);
-      if (!response.ok) {
-        console.error('Today orders detail query failed:', response.status);
+      const { response: r2, data: d2 } = await executeDiceQuery(query2, apiKey);
+      if (!r2.ok) return null;
+      const o2 = d2?.data?.viewer?.orders;
+      if (!o2) {
+        console.error('Orders query error:', JSON.stringify(d2?.errors || d2));
         return null;
       }
-
-      const ordersNode = data?.data?.viewer?.orders;
-      if (!ordersNode) {
-        console.error('Today orders detail error:', JSON.stringify(data?.errors || data));
-        return null;
-      }
-
-      for (const orderEdge of (ordersNode.edges || [])) {
-        const eventId = orderEdge.node?.event?.id;
-        const qty = orderEdge.node?.quantity || 1;
-        if (eventId) {
-          countsMap.set(eventId, (countsMap.get(eventId) || 0) + qty);
-        }
-      }
-
-      hasNextPage = Boolean(ordersNode.pageInfo?.hasNextPage);
-      afterCursor = ordersNode.pageInfo?.endCursor || null;
-      if (!afterCursor) hasNextPage = false;
+      console.log(`Orders (no sort) totalCount: ${o2.totalCount}, edges: ${JSON.stringify(o2.edges?.slice(0, 3))}`);
+      return filterOrdersByDate(o2.edges || [], todayISO);
     }
 
-    return countsMap;
+    console.log(`Orders totalCount: ${ordersNode.totalCount}, recent: ${JSON.stringify(ordersNode.edges?.slice(0, 3))}`);
+    return filterOrdersByDate(ordersNode.edges || [], todayISO);
   } catch (err) {
     console.error('fetchTodayTicketCounts error:', err);
     return null;
   }
+}
+
+function filterOrdersByDate(edges: any[], todayISO: string): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const edge of edges) {
+    const node = edge.node;
+    if (!node?.purchasedAt) continue;
+    const orderDate = node.purchasedAt.substring(0, 10);
+    if (orderDate === todayISO) {
+      const eventId = node.event?.id;
+      const qty = node.quantity || 1;
+      if (eventId) {
+        counts[eventId] = (counts[eventId] || 0) + qty;
+      }
+    }
+  }
+  return counts;
 }
 
 function getTodayISO(): string {
