@@ -160,7 +160,7 @@ const Index = () => {
       </header>
 
       <main className="px-5 space-y-5">
-        {events.length > 0 && <WeeklySalesCard events={events} />}
+        
 
         {error && (
           <div className="soft-card-pink p-4">
