@@ -89,7 +89,7 @@ const Index = () => {
   const todayBreakdown = useMemo(
     () =>
       isLatestEdition && selectedEdition
-        ? getTodaySalesBreakdown(selectedEdition, snapshots.todayBaseline, snapshots.yesterdayBaseline)
+        ? getTodaySalesBreakdown(selectedEdition, snapshots.todayBaseline, snapshots.yesterdayBaseline, snapshots.todayTicketCounts)
         : [],
     [isLatestEdition, selectedEdition, snapshots]
   );
