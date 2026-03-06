@@ -77,61 +77,57 @@ async function introspectDiceSchema(apiKey: string) {
 
 async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Record<string, number> | null> {
   try {
-    const todayStart = `${todayISO}T00:00:00Z`;
+    // Calculate the UTC equivalent of midnight Italian time (CET=UTC+1, CEST=UTC+2)
+    // Create a date at midnight in Europe/Rome, then get its UTC representation
+    const midnightLocal = new Date(`${todayISO}T00:00:00`);
+    // Get the timezone offset for Rome (we approximate: March = CET = UTC+1)
+    // More robust: use the actual offset
+    const romeDate = new Date(midnightLocal.toLocaleString('en-US', { timeZone: 'Europe/Rome' }));
+    const utcDate = new Date(midnightLocal.toLocaleString('en-US', { timeZone: 'UTC' }));
+    const offsetMs = utcDate.getTime() - romeDate.getTime();
+    const todayStartUTC = new Date(midnightLocal.getTime() + offsetMs).toISOString();
     
-    // Try filtering by specific CF14 event to debug
-    const debugQuery = `{
-      byDate: viewer {
-        orders(first: 5, where: { purchasedAt: { gte: "${todayStart}" } }) {
-          totalCount
-        }
-      }
-      byEvent: viewer {
-        orders(first: 5, where: { eventId: { eq: "RXZlbnQ6NTUzMDE3" } }) {
+    console.log(`Today filter: todayISO=${todayISO}, todayStartUTC=${todayStartUTC}`);
+    
+    const query = `{
+      viewer {
+        orders(first: 50, where: { purchasedAt: { gte: "${todayStartUTC}" } }) {
           totalCount
           edges {
-            node { id purchasedAt quantity event { id name } }
-          }
-        }
-      }
-      lastOrders: viewer {
-        orders(last: 5) {
-          totalCount
-          edges {
-            node { id purchasedAt quantity event { id name } }
+            node {
+              id
+              purchasedAt
+              event { id name }
+              quantity
+            }
           }
         }
       }
     }`;
 
-    const { response, data } = await executeDiceQuery(debugQuery, apiKey);
+    const { response, data } = await executeDiceQuery(query, apiKey);
     if (!response.ok) {
-      console.error('Orders debug query failed:', response.status);
+      console.error('Orders query failed:', response.status);
       return null;
     }
 
-    console.log(`Orders debug - byDate totalCount: ${data?.data?.byDate?.orders?.totalCount}`);
-    console.log(`Orders debug - byEvent totalCount: ${data?.data?.byEvent?.orders?.totalCount}, edges: ${JSON.stringify(data?.data?.byEvent?.orders?.edges)}`);
-    console.log(`Orders debug - lastOrders: ${JSON.stringify(data?.data?.lastOrders?.orders?.edges)}`);
+    const ordersNode = data?.data?.viewer?.orders;
+    if (!ordersNode) {
+      console.error('Orders query error:', JSON.stringify(data?.errors || data));
+      return null;
+    }
 
-    // Use the last orders to find today's
-    const lastEdges = data?.data?.lastOrders?.orders?.edges || [];
+    console.log(`Today orders: totalCount=${ordersNode.totalCount}, edges=${JSON.stringify(ordersNode.edges?.slice(0, 5))}`);
+
     const counts: Record<string, number> = {};
-    for (const edge of lastEdges) {
-      const node = edge.node;
-      if (!node?.purchasedAt) continue;
-      const orderDate = node.purchasedAt.substring(0, 10);
-      if (orderDate === todayISO) {
-        const eventId = node.event?.id;
-        const qty = node.quantity || 1;
-        if (eventId) {
-          counts[eventId] = (counts[eventId] || 0) + qty;
-        }
+    for (const edge of (ordersNode.edges || [])) {
+      const eventId = edge.node?.event?.id;
+      const qty = edge.node?.quantity || 1;
+      if (eventId) {
+        counts[eventId] = (counts[eventId] || 0) + qty;
       }
     }
-    
-    if (Object.keys(counts).length > 0) return counts;
-    return {};
+    return counts;
   } catch (err) {
     console.error('fetchTodayTicketCounts error:', err);
     return null;
