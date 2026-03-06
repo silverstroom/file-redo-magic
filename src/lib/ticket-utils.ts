@@ -224,9 +224,11 @@ export function getTodaySalesPerDay(
   const days = getEditionDays(edition);
   if (!todayBaseline && !yesterdayBaseline) return days.map(d => ({ date: d, soldToday: 0, soldYesterday: 0 }));
 
-  const referenceMap = todayBaseline
-    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : new Map(yesterdayBaseline!.map(s => [s.event_id, s.tickets_sold]));
+  // When yesterdayBaseline exists, use it to show delta since yesterday
+  // When no yesterdayBaseline exists (first day of usage), show absolute values (baseline = 0)
+  const referenceMap = yesterdayBaseline
+    ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
+    : new Map<string, number>();
 
   const soldTodayPerDay: Record<string, number> = {};
   for (const d of days) {
@@ -235,7 +237,7 @@ export function getTodaySalesPerDay(
 
   for (const event of edition.events) {
     const eventDays = getEventDays(event, edition.key);
-    const refSold = referenceMap.get(event.id) ?? event.ticketsSold;
+    const refSold = referenceMap.get(event.id) ?? 0;
     const diffToday = Math.max(0, event.ticketsSold - refSold);
 
     for (const d of eventDays) {
@@ -257,14 +259,16 @@ export function getTodaySalesBreakdown(
   todayBaseline: { event_id: string; tickets_sold: number }[] | null,
   yesterdayBaseline?: { event_id: string; tickets_sold: number }[] | null,
 ): TodaySalesEventDetail[] {
-  const reference = todayBaseline || yesterdayBaseline;
-  if (!reference) return [];
+  if (!todayBaseline && !yesterdayBaseline) return [];
 
-  const refMap = new Map(reference.map(s => [s.event_id, s.tickets_sold]));
+  // Use yesterdayBaseline as reference; if not available, use empty map (all sales = "today")
+  const refMap = yesterdayBaseline
+    ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
+    : new Map<string, number>();
   const details: TodaySalesEventDetail[] = [];
 
   for (const event of edition.events) {
-    const refSold = refMap.get(event.id) ?? event.ticketsSold;
+    const refSold = refMap.get(event.id) ?? 0;
     const diffToday = Math.max(0, event.ticketsSold - refSold);
     if (diffToday > 0) {
       details.push({ eventName: event.name, soldToday: diffToday });
@@ -311,14 +315,15 @@ export function getTodayPresenzeBreakdown(
   todayBaseline: { event_id: string; tickets_sold: number }[] | null,
   yesterdayBaseline?: { event_id: string; tickets_sold: number }[] | null,
 ): TodaySalesEventDetail[] {
-  const reference = todayBaseline || yesterdayBaseline;
-  if (!reference) return [];
+  if (!todayBaseline && !yesterdayBaseline) return [];
 
-  const refMap = new Map(reference.map(s => [s.event_id, s.tickets_sold]));
+  const refMap = yesterdayBaseline
+    ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
+    : new Map<string, number>();
   const details: TodaySalesEventDetail[] = [];
 
   for (const event of edition.events) {
-    const refSold = refMap.get(event.id) ?? event.ticketsSold;
+    const refSold = refMap.get(event.id) ?? 0;
     const diffToday = Math.max(0, event.ticketsSold - refSold);
     if (diffToday > 0) {
       const days = getEventDays(event, edition.key);
