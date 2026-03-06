@@ -67,6 +67,42 @@ async function fetchAllViewerEvents(apiKey: string) {
 async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Map<string, number> | null> {
   try {
     const todayStart = `${todayISO}T00:00`;
+    
+    // First, introspect the Order and Ticket types to find the right fields
+    const introQuery = `{
+      viewer {
+        orders(first: 1, where: { purchasedAt: { gte: "${todayStart}" } }) {
+          totalCount
+          edges {
+            node {
+              id
+              purchasedAt
+            }
+          }
+        }
+      }
+    }`;
+
+    const { response: introResp, data: introData } = await executeDiceQuery(introQuery, apiKey);
+    if (!introResp.ok) {
+      console.error('Orders introspection failed:', introResp.status);
+      return null;
+    }
+
+    const ordersInfo = introData?.data?.viewer?.orders;
+    if (!ordersInfo) {
+      console.error('Orders introspection error:', JSON.stringify(introData?.errors || introData));
+      return null;
+    }
+
+    const totalOrders = ordersInfo.totalCount || 0;
+    console.log(`Found ${totalOrders} orders purchased today`);
+
+    if (totalOrders === 0) {
+      return new Map<string, number>();
+    }
+
+    // Now fetch all orders with ticket event info
     const countsMap = new Map<string, number>();
     let hasNextPage = true;
     let afterCursor: string | null = null;
@@ -79,8 +115,10 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
             pageInfo { hasNextPage endCursor }
             edges {
               node {
+                id
                 tickets {
-                  event { id }
+                  eventId
+                  id
                 }
               }
             }
@@ -103,7 +141,7 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
       for (const orderEdge of (ordersNode.edges || [])) {
         const tickets = orderEdge.node?.tickets || [];
         for (const ticket of tickets) {
-          const eventId = ticket?.event?.id;
+          const eventId = ticket?.eventId;
           if (eventId) {
             countsMap.set(eventId, (countsMap.get(eventId) || 0) + 1);
           }
