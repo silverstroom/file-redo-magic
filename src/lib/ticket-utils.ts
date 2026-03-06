@@ -223,7 +223,7 @@ export function getTodaySalesPerDay(
   todayTicketCounts?: Record<string, number> | null,
 ): TodaySalesPerDay[] {
   const days = getEditionDays(edition);
-  const useDiceCounts = todayTicketCounts && Object.keys(todayTicketCounts).length > 0;
+  const useDiceCounts = todayTicketCounts !== null && todayTicketCounts !== undefined;
 
   // Priority: todayTicketCounts (direct from DICE API) > yesterdayBaseline > todayBaseline > empty
   const referenceMap = !useDiceCounts
