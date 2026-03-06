@@ -224,6 +224,7 @@ const Index = () => {
                   }
                 />
               ))}
+              {isLatestEdition && <WeeklySalesCard events={selectedEdition.events} />}
             </div>
 
             
