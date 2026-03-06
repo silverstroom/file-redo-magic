@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { CalendarDays, Ticket, Users } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -7,6 +7,12 @@ import type { DiceEventRaw } from '@/lib/ticket-utils';
 
 interface WeeklySalesCardProps {
   events: DiceEventRaw[];
+}
+
+interface WeeklyBreakdownItem {
+  eventName: string;
+  ticketsDelta: number;
+  presenzeDelta: number;
 }
 
 function isColorFestEvent(eventName: string): boolean {
@@ -19,9 +25,18 @@ function getPresenzeMultiplier(eventName: string): number {
   return 1;
 }
 
+function getShortTicketLabel(eventName: string): string {
+  if (/(abbonamento|full)/i.test(eventName) && !/1\s*day|one\s*day/i.test(eventName)) return 'Abbonamento';
+  if (/2\s*days?/i.test(eventName)) return '2 Days';
+  // Extract date from name like "11-12 Agosto" or just the day
+  const dateMatch = eventName.match(/(\d{1,2}(?:\s*[-–]\s*\d{1,2})?\s*(?:ago|agosto|lug|luglio|giu|giugno))/i);
+  if (dateMatch) return dateMatch[1];
+  return eventName.replace(/color\s*fest\s*\d+\s*/i, '').trim() || eventName;
+}
+
 export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
-  const [weeklyBiglietti, setWeeklyBiglietti] = useState<number | null>(null);
-  const [weeklyPresenze, setWeeklyPresenze] = useState<number | null>(null);
+  const [breakdown, setBreakdown] = useState<WeeklyBreakdownItem[]>([]);
+  const [totals, setTotals] = useState<{ biglietti: number; presenze: number } | null>(null);
 
   const today = new Date();
   const weekAgo = subDays(today, 7);
@@ -29,7 +44,6 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
 
   const computeWeekly = useCallback(async () => {
     try {
-      const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
       const weekAgoStr = subDays(today, 7).toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
 
       const { data: baselineSnapshots } = await supabase
@@ -40,8 +54,8 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
         .limit(100);
 
       if (!baselineSnapshots || baselineSnapshots.length === 0) {
-        setWeeklyBiglietti(null);
-        setWeeklyPresenze(null);
+        setTotals(null);
+        setBreakdown([]);
         return;
       }
 
@@ -55,17 +69,26 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
       const cfEvents = events.filter(e => isColorFestEvent(e.name));
       let totalBiglietti = 0;
       let totalPresenze = 0;
+      const items: WeeklyBreakdownItem[] = [];
 
       for (const event of cfEvents) {
         const baseline = baselineMap.get(event.id);
         const baselineSold = baseline?.tickets_sold ?? 0;
         const delta = Math.max(0, event.ticketsSold - baselineSold);
-        totalBiglietti += delta;
-        totalPresenze += delta * getPresenzeMultiplier(event.name);
+        if (delta > 0) {
+          const presenze = delta * getPresenzeMultiplier(event.name);
+          items.push({
+            eventName: getShortTicketLabel(event.name),
+            ticketsDelta: delta,
+            presenzeDelta: presenze,
+          });
+          totalBiglietti += delta;
+          totalPresenze += presenze;
+        }
       }
 
-      setWeeklyBiglietti(totalBiglietti);
-      setWeeklyPresenze(totalPresenze);
+      setBreakdown(items);
+      setTotals({ biglietti: totalBiglietti, presenze: totalPresenze });
     } catch (err) {
       console.error('Error computing weekly sales:', err);
     }
@@ -75,7 +98,7 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
     if (events.length > 0) computeWeekly();
   }, [events, computeWeekly]);
 
-  if (weeklyBiglietti === null) return null;
+  if (!totals) return null;
 
   return (
     <div className="soft-card-purple p-4">
@@ -88,22 +111,36 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
           <p className="text-[10px] text-muted-foreground">{dateLabel}</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+
+      <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Ticket className="w-4 h-4 text-primary" />
           <div>
-            <p className="text-lg font-extrabold font-mono text-primary">{weeklyBiglietti.toLocaleString('it-IT')}</p>
+            <p className="text-lg font-extrabold font-mono text-primary">{totals.biglietti.toLocaleString('it-IT')}</p>
             <p className="text-[10px] text-muted-foreground">Biglietti venduti</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-secondary" />
+          <Users className="w-4 h-4 text-accent" />
           <div>
-            <p className="text-lg font-extrabold font-mono text-secondary">{weeklyPresenze.toLocaleString('it-IT')}</p>
+            <p className="text-lg font-extrabold font-mono text-accent">{totals.presenze.toLocaleString('it-IT')}</p>
             <p className="text-[10px] text-muted-foreground">Presenze</p>
           </div>
         </div>
       </div>
+
+      {breakdown.length > 0 && (
+        <div className="pt-3 border-t border-foreground/5 space-y-1.5">
+          {breakdown.map((item, i) => (
+            <div key={i} className="flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground truncate mr-2">{item.eventName}</span>
+              <span className="font-mono font-semibold text-foreground whitespace-nowrap">
+                +{item.ticketsDelta} big. / {item.presenzeDelta} pres.
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
