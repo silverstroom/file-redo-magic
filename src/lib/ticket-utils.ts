@@ -225,12 +225,11 @@ export function getTodaySalesPerDay(
   const days = getEditionDays(edition);
   const useDiceCounts = todayTicketCounts !== null && todayTicketCounts !== undefined;
 
-  // Priority: todayTicketCounts (direct from DICE API) > yesterdayBaseline > todayBaseline > empty
+  // Priority: yesterdayBaseline (previous day snapshot) > baseline 0
+  // When no previous day exists (day 1), baseline = 0 so all current sales show as "today"
   const referenceMap = !useDiceCounts
     ? (yesterdayBaseline && yesterdayBaseline.length > 0
       ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
-      : todayBaseline && todayBaseline.length > 0
-      ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
       : new Map<string, number>())
     : null;
 
