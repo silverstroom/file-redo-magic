@@ -101,9 +101,9 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
       }
 
       for (const orderEdge of (ordersNode.edges || [])) {
-        const tickets = orderEdge.node?.tickets?.edges || [];
-        for (const ticketEdge of tickets) {
-          const eventId = ticketEdge.node?.event?.id;
+        const tickets = orderEdge.node?.tickets || [];
+        for (const ticket of tickets) {
+          const eventId = ticket?.event?.id;
           if (eventId) {
             countsMap.set(eventId, (countsMap.get(eventId) || 0) + 1);
           }
