@@ -210,15 +210,7 @@ Deno.serve(async (req) => {
           yesterdayBaseline = ydData;
         }
 
-        // Query DICE API for today's actual ticket sales (using purchasedAfter filter)
-        const todayCountsMap = await fetchTodayTicketCounts(apiKey, today);
-        if (todayCountsMap) {
-          const counts: Record<string, number> = {};
-          for (const [eventId, count] of todayCountsMap) {
-            if (count > 0) counts[eventId] = count;
-          }
-          todayTicketCounts = counts; // empty object = 0 sales, null = query failed
-        }
+        // todayTicketCounts left as null — delta is computed client-side from snapshots
 
         return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline, todayTicketCounts }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
