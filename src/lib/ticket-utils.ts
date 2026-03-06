@@ -309,12 +309,8 @@ export function getTodayPresenzeBreakdown(
   todayBaseline: { event_id: string; tickets_sold: number }[] | null,
   yesterdayBaseline?: { event_id: string; tickets_sold: number }[] | null,
 ): TodaySalesEventDetail[] {
-  if (!todayBaseline && !yesterdayBaseline) return [];
-
-  const refMap = yesterdayBaseline
+  const refMap = yesterdayBaseline && yesterdayBaseline.length > 0
     ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : todayBaseline
-    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
     : new Map<string, number>();
   const details: TodaySalesEventDetail[] = [];
 
