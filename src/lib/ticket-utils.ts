@@ -222,13 +222,9 @@ export function getTodaySalesPerDay(
   yesterdayBaseline: { event_id: string; tickets_sold: number }[] | null,
 ): TodaySalesPerDay[] {
   const days = getEditionDays(edition);
-  if (!todayBaseline && !yesterdayBaseline) return days.map(d => ({ date: d, soldToday: 0, soldYesterday: 0 }));
-
-  // Use yesterdayBaseline if available, otherwise use todayBaseline (delta = new sales since first load today)
-  const referenceMap = yesterdayBaseline
+  // Use yesterdayBaseline if available; otherwise baseline = 0 (show all as "today")
+  const referenceMap = yesterdayBaseline && yesterdayBaseline.length > 0
     ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : todayBaseline
-    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
     : new Map<string, number>();
 
   const soldTodayPerDay: Record<string, number> = {};
