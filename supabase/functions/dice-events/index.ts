@@ -150,11 +150,6 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
       if (!afterCursor) hasNextPage = false;
     }
 
-      hasNextPage = Boolean(ordersNode.pageInfo?.hasNextPage);
-      afterCursor = ordersNode.pageInfo?.endCursor || null;
-      if (!afterCursor) hasNextPage = false;
-    }
-
     return countsMap;
   } catch (err) {
     console.error('fetchTodayTicketCounts error:', err);
