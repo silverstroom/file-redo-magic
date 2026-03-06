@@ -268,8 +268,6 @@ export function getTodaySalesBreakdown(
   const refMap = !useDiceCounts
     ? (yesterdayBaseline && yesterdayBaseline.length > 0
       ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
-      : todayBaseline && todayBaseline.length > 0
-      ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
       : new Map<string, number>())
     : null;
   const details: TodaySalesEventDetail[] = [];
