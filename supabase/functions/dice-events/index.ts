@@ -102,13 +102,14 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
       return new Map<string, number>();
     }
 
-    // Now fetch all orders with ticket event info
+    // Fetch orders with ticket details
     const countsMap = new Map<string, number>();
     let hasNextPage = true;
     let afterCursor: string | null = null;
 
     while (hasNextPage) {
       const afterClause = afterCursor ? `, after: "${afterCursor}"` : '';
+      // Query order-level event info since Ticket type doesn't have event field
       const query = `{
         viewer {
           orders(first: 50${afterClause}, where: { purchasedAt: { gte: "${todayStart}" } }) {
@@ -116,10 +117,8 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
             edges {
               node {
                 id
-                tickets {
-                  eventId
-                  id
-                }
+                event { id }
+                quantity
               }
             }
           }
@@ -128,25 +127,28 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
 
       const { response, data } = await executeDiceQuery(query, apiKey);
       if (!response.ok) {
-        console.error('Today orders query failed:', response.status);
+        console.error('Today orders detail query failed:', response.status);
         return null;
       }
 
       const ordersNode = data?.data?.viewer?.orders;
       if (!ordersNode) {
-        console.error('Today orders query error:', JSON.stringify(data?.errors || data));
+        console.error('Today orders detail error:', JSON.stringify(data?.errors || data));
         return null;
       }
 
       for (const orderEdge of (ordersNode.edges || [])) {
-        const tickets = orderEdge.node?.tickets || [];
-        for (const ticket of tickets) {
-          const eventId = ticket?.eventId;
-          if (eventId) {
-            countsMap.set(eventId, (countsMap.get(eventId) || 0) + 1);
-          }
+        const eventId = orderEdge.node?.event?.id;
+        const qty = orderEdge.node?.quantity || 1;
+        if (eventId) {
+          countsMap.set(eventId, (countsMap.get(eventId) || 0) + qty);
         }
       }
+
+      hasNextPage = Boolean(ordersNode.pageInfo?.hasNextPage);
+      afterCursor = ordersNode.pageInfo?.endCursor || null;
+      if (!afterCursor) hasNextPage = false;
+    }
 
       hasNextPage = Boolean(ordersNode.pageInfo?.hasNextPage);
       afterCursor = ordersNode.pageInfo?.endCursor || null;
