@@ -259,10 +259,12 @@ export function getTodaySalesBreakdown(
   todayBaseline: { event_id: string; tickets_sold: number }[] | null,
   yesterdayBaseline?: { event_id: string; tickets_sold: number }[] | null,
 ): TodaySalesEventDetail[] {
-  const reference = todayBaseline || yesterdayBaseline;
-  if (!reference) return [];
+  if (!todayBaseline && !yesterdayBaseline) return [];
 
-  const refMap = new Map(reference.map(s => [s.event_id, s.tickets_sold]));
+  // Use yesterdayBaseline as reference; if not available, use empty map (all sales = "today")
+  const refMap = yesterdayBaseline
+    ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
+    : new Map<string, number>();
   const details: TodaySalesEventDetail[] = [];
 
   for (const event of edition.events) {
