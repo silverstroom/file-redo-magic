@@ -78,44 +78,48 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
     
     console.log(`Today filter: todayISO=${todayISO}, todayStartUTC=${todayStartUTC}`);
     
-    const query = `{
-      viewer {
-        orders(first: 50, where: { purchasedAt: { gte: "${todayStartUTC}" } }) {
-          totalCount
-          edges {
-            node {
-              id
-              purchasedAt
-              event { id name }
-              quantity
+    const counts: Record<string, number> = {};
+    let hasNextPage = true;
+    let afterCursor: string | null = null;
+
+    while (hasNextPage) {
+      const afterClause = afterCursor ? `, after: "${afterCursor}"` : '';
+      const query = `{
+        viewer {
+          orders(first: 50${afterClause}, where: { purchasedAt: { gte: "${todayStartUTC}" } }) {
+            totalCount
+            pageInfo { hasNextPage endCursor }
+            edges {
+              node {
+                id
+                event { id }
+                quantity
+              }
             }
           }
         }
+      }`;
+
+      const { response, data } = await executeDiceQuery(query, apiKey);
+      if (!response.ok) return null;
+
+      const ordersNode = data?.data?.viewer?.orders;
+      if (!ordersNode) return null;
+
+      for (const edge of (ordersNode.edges || [])) {
+        const eventId = edge.node?.event?.id;
+        const qty = edge.node?.quantity || 1;
+        if (eventId) {
+          counts[eventId] = (counts[eventId] || 0) + qty;
+        }
       }
-    }`;
 
-    const { response, data } = await executeDiceQuery(query, apiKey);
-    if (!response.ok) {
-      console.error('Orders query failed:', response.status);
-      return null;
+      hasNextPage = Boolean(ordersNode.pageInfo?.hasNextPage);
+      afterCursor = ordersNode.pageInfo?.endCursor || null;
+      if (!afterCursor) hasNextPage = false;
     }
 
-    const ordersNode = data?.data?.viewer?.orders;
-    if (!ordersNode) {
-      console.error('Orders query error:', JSON.stringify(data?.errors || data));
-      return null;
-    }
-
-    console.log(`Today orders: totalCount=${ordersNode.totalCount}, edges=${JSON.stringify(ordersNode.edges?.slice(0, 5))}`);
-
-    const counts: Record<string, number> = {};
-    for (const edge of (ordersNode.edges || [])) {
-      const eventId = edge.node?.event?.id;
-      const qty = edge.node?.quantity || 1;
-      if (eventId) {
-        counts[eventId] = (counts[eventId] || 0) + qty;
-      }
-    }
+    console.log(`Today orders counts:`, JSON.stringify(counts));
     return counts;
   } catch (err) {
     console.error('fetchTodayTicketCounts error:', err);
