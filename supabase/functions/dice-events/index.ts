@@ -222,9 +222,7 @@ Deno.serve(async (req) => {
           for (const [eventId, count] of todayCountsMap) {
             if (count > 0) counts[eventId] = count;
           }
-          if (Object.keys(counts).length > 0) {
-            todayTicketCounts = counts;
-          }
+          todayTicketCounts = counts; // empty object = 0 sales, null = query failed
         }
 
         return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline, todayTicketCounts }),
