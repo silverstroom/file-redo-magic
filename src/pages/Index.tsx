@@ -23,6 +23,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const CARD_STYLES = ['soft-card-blue', 'soft-card-yellow', 'soft-card-orange', 'soft-card-mint', 'soft-card-pink'];
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Buongiorno ☀️';
+  if (hour >= 12 && hour < 18) return 'Buon pomeriggio 🌤️';
+  if (hour >= 18 && hour < 22) return 'Buonasera 🌙';
+  return 'Buonanotte 🌜';
+};
+
+const formatToday = () => {
+  const days = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+  const months = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+  const now = new Date();
+  return `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
+};
+
 const Index = () => {
   const { events, loading, error, fetchEvents, snapshots } = useDiceEvents();
   const [selectedEditionKey, setSelectedEditionKey] = useState<string | null>(null);
