@@ -21,6 +21,7 @@ export function useDiceEvents() {
   const [snapshots, setSnapshots] = useState<SnapshotData>({
     todayBaseline: null,
     yesterdayBaseline: null,
+    todayTicketCounts: null,
   });
   const inFlightRef = useRef(false);
 
