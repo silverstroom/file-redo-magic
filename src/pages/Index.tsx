@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import logoBlack from '@/assets/logo_black.png';
 import { Ticket, BarChart3, RefreshCw, Users, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDiceEvents } from '@/hooks/useDiceEvents';
