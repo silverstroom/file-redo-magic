@@ -321,7 +321,9 @@ export function getTodayPresenzeBreakdown(
 ): TodaySalesEventDetail[] {
   if (!todayBaseline && !yesterdayBaseline) return [];
 
-  const refMap = yesterdayBaseline
+  const refMap = todayBaseline
+    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
+    : yesterdayBaseline
     ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
     : new Map<string, number>();
   const details: TodaySalesEventDetail[] = [];
