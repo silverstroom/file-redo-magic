@@ -220,14 +220,19 @@ export function getTodaySalesPerDay(
   edition: FestivalEdition,
   todayBaseline: { event_id: string; tickets_sold: number }[] | null,
   yesterdayBaseline: { event_id: string; tickets_sold: number }[] | null,
+  todayTicketCounts?: Record<string, number> | null,
 ): TodaySalesPerDay[] {
   const days = getEditionDays(edition);
-  // Priority: yesterdayBaseline > todayBaseline (first snapshot today) > empty (no tracking yet)
-  const referenceMap = yesterdayBaseline && yesterdayBaseline.length > 0
-    ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : todayBaseline && todayBaseline.length > 0
-    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : new Map<string, number>();
+  const useDiceCounts = todayTicketCounts && Object.keys(todayTicketCounts).length > 0;
+
+  // Priority: todayTicketCounts (direct from DICE API) > yesterdayBaseline > todayBaseline > empty
+  const referenceMap = !useDiceCounts
+    ? (yesterdayBaseline && yesterdayBaseline.length > 0
+      ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
+      : todayBaseline && todayBaseline.length > 0
+      ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
+      : new Map<string, number>())
+    : null;
 
   const soldTodayPerDay: Record<string, number> = {};
   for (const d of days) {
@@ -236,8 +241,9 @@ export function getTodaySalesPerDay(
 
   for (const event of edition.events) {
     const eventDays = getEventDays(event, edition.key);
-    const refSold = referenceMap.get(event.id) ?? 0;
-    const diffToday = Math.max(0, event.ticketsSold - refSold);
+    const diffToday = useDiceCounts
+      ? (todayTicketCounts![event.id] ?? 0)
+      : Math.max(0, event.ticketsSold - (referenceMap!.get(event.id) ?? 0));
 
     for (const d of eventDays) {
       if (d in soldTodayPerDay) {
