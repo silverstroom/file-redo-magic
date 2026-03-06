@@ -325,7 +325,7 @@ export function getTodayPresenzeBreakdown(
   yesterdayBaseline?: { event_id: string; tickets_sold: number }[] | null,
   todayTicketCounts?: Record<string, number> | null,
 ): TodaySalesEventDetail[] {
-  const useDiceCounts = todayTicketCounts && Object.keys(todayTicketCounts).length > 0;
+  const useDiceCounts = todayTicketCounts !== null && todayTicketCounts !== undefined;
   const refMap = !useDiceCounts
     ? (yesterdayBaseline && yesterdayBaseline.length > 0
       ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
