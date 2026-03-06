@@ -126,7 +126,7 @@ const Index = () => {
       <header className="px-5 pt-8 pb-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">{getGreeting()} · {formatToday()}</p>
+            <p className="text-base font-medium text-muted-foreground">{getGreeting()} · {formatToday()}</p>
             <h1 className="text-2xl font-bold tracking-tight mt-0.5">Color Fest</h1>
           </div>
           <Button
