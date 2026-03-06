@@ -176,17 +176,11 @@ Deno.serve(async (req) => {
           yesterdayBaseline = ydData;
         }
 
-        // Try to get today's orders from DICE API
+        // Get today's ticket counts from DICE orders API (timezone-aware)
         const todayCounts = await fetchTodayTicketCounts(apiKey, today);
         if (todayCounts && Object.keys(todayCounts).length > 0) {
           todayTicketCounts = todayCounts;
         }
-
-        // Also run schema introspection for debugging
-        try {
-          const schemaInfo = await introspectDiceSchema(apiKey);
-          console.log('DICE schema introspection:', JSON.stringify(schemaInfo).substring(0, 2000));
-        } catch (e) { console.error('Introspection failed:', e); }
 
         return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline, todayTicketCounts }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
