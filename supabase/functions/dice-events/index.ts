@@ -80,11 +80,7 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
             edges {
               node {
                 tickets {
-                  edges {
-                    node {
-                      event { id }
-                    }
-                  }
+                  event { id }
                 }
               }
             }
