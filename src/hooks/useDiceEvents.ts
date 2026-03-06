@@ -67,6 +67,7 @@ export function useDiceEvents() {
       setSnapshots({
         todayBaseline: data.todayBaseline || null,
         yesterdayBaseline: data.yesterdayBaseline || null,
+        todayTicketCounts: data.todayTicketCounts || null,
       });
     } catch (err) {
       console.error('Error fetching DICE events:', err);
