@@ -284,8 +284,8 @@ const Monitoraggio = () => {
           }
           dailyData.sort((a, b) => a.sale_date.localeCompare(b.sale_date));
 
-          // Use live API data for CF14 totals
-          const cfLiveEvents = eventsRef.current.filter(e => isColorFestEvent(e.name));
+          // Use live API data for CF14 totals - filter only CF14 events
+          const cfLiveEvents = eventsRef.current.filter(e => /color\s*fest\s*14/i.test(e.name));
           const liveBiglietti = cfLiveEvents.reduce((s, e) => s + e.ticketsSold, 0);
           const livePresenze = cfLiveEvents.reduce((s, e) => s + e.ticketsSold * getPresenzeMultiplier(e.name), 0);
 
