@@ -226,7 +226,7 @@ const Index = () => {
               ))}
             </div>
 
-            {isLatestEdition && <WeeklySalesCard events={selectedEdition.events} />}
+            
 
             <DayBarChart distribution={distribution} />
 
