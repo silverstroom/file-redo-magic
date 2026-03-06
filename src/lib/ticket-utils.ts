@@ -224,12 +224,8 @@ export function getTodaySalesPerDay(
   const days = getEditionDays(edition);
   if (!todayBaseline && !yesterdayBaseline) return days.map(d => ({ date: d, soldToday: 0, soldYesterday: 0 }));
 
-  // Use todayBaseline (morning snapshot) as reference to show delta since start of day
-  // Fallback to yesterdayBaseline if todayBaseline not available
-  // Events not in reference get 0 baseline (new events today)
-  const referenceMap = todayBaseline
-    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : yesterdayBaseline
+  // Use yesterdayBaseline as reference; if not available, baseline = 0 (all sales count as "today")
+  const referenceMap = yesterdayBaseline
     ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
     : new Map<string, number>();
 
@@ -264,9 +260,7 @@ export function getTodaySalesBreakdown(
 ): TodaySalesEventDetail[] {
   if (!todayBaseline && !yesterdayBaseline) return [];
 
-  const refMap = todayBaseline
-    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : yesterdayBaseline
+  const refMap = yesterdayBaseline
     ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
     : new Map<string, number>();
   const details: TodaySalesEventDetail[] = [];
@@ -321,9 +315,7 @@ export function getTodayPresenzeBreakdown(
 ): TodaySalesEventDetail[] {
   if (!todayBaseline && !yesterdayBaseline) return [];
 
-  const refMap = todayBaseline
-    ? new Map(todayBaseline.map(s => [s.event_id, s.tickets_sold]))
-    : yesterdayBaseline
+  const refMap = yesterdayBaseline
     ? new Map(yesterdayBaseline.map(s => [s.event_id, s.tickets_sold]))
     : new Map<string, number>();
   const details: TodaySalesEventDetail[] = [];
