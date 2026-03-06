@@ -64,6 +64,99 @@ async function fetchAllViewerEvents(apiKey: string) {
   return { data: { viewer: { events: { totalCount, edges: allEdges } } } };
 }
 
+async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Map<string, number> | null> {
+  try {
+    const todayStart = `${todayISO}T00:00`;
+    
+    // First, introspect the Order and Ticket types to find the right fields
+    const introQuery = `{
+      viewer {
+        orders(first: 1, where: { purchasedAt: { gte: "${todayStart}" } }) {
+          totalCount
+          edges {
+            node {
+              id
+              purchasedAt
+            }
+          }
+        }
+      }
+    }`;
+
+    const { response: introResp, data: introData } = await executeDiceQuery(introQuery, apiKey);
+    if (!introResp.ok) {
+      console.error('Orders introspection failed:', introResp.status);
+      return null;
+    }
+
+    const ordersInfo = introData?.data?.viewer?.orders;
+    if (!ordersInfo) {
+      console.error('Orders introspection error:', JSON.stringify(introData?.errors || introData));
+      return null;
+    }
+
+    const totalOrders = ordersInfo.totalCount || 0;
+    console.log(`Found ${totalOrders} orders purchased today`);
+
+    if (totalOrders === 0) {
+      return new Map<string, number>();
+    }
+
+    // Fetch orders with ticket details
+    const countsMap = new Map<string, number>();
+    let hasNextPage = true;
+    let afterCursor: string | null = null;
+
+    while (hasNextPage) {
+      const afterClause = afterCursor ? `, after: "${afterCursor}"` : '';
+      // Query order-level event info since Ticket type doesn't have event field
+      const query = `{
+        viewer {
+          orders(first: 50${afterClause}, where: { purchasedAt: { gte: "${todayStart}" } }) {
+            pageInfo { hasNextPage endCursor }
+            edges {
+              node {
+                id
+                event { id }
+                quantity
+              }
+            }
+          }
+        }
+      }`;
+
+      const { response, data } = await executeDiceQuery(query, apiKey);
+      if (!response.ok) {
+        console.error('Today orders detail query failed:', response.status);
+        return null;
+      }
+
+      const ordersNode = data?.data?.viewer?.orders;
+      if (!ordersNode) {
+        console.error('Today orders detail error:', JSON.stringify(data?.errors || data));
+        return null;
+      }
+
+      for (const orderEdge of (ordersNode.edges || [])) {
+        const eventId = orderEdge.node?.event?.id;
+        const qty = orderEdge.node?.quantity || 1;
+        if (eventId) {
+          countsMap.set(eventId, (countsMap.get(eventId) || 0) + qty);
+        }
+      }
+
+      hasNextPage = Boolean(ordersNode.pageInfo?.hasNextPage);
+      afterCursor = ordersNode.pageInfo?.endCursor || null;
+      if (!afterCursor) hasNextPage = false;
+    }
+
+    return countsMap;
+  } catch (err) {
+    console.error('fetchTodayTicketCounts error:', err);
+    return null;
+  }
+}
+
 function getTodayISO(): string {
   const now = new Date();
   return now.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
@@ -92,6 +185,7 @@ Deno.serve(async (req) => {
       }
 
       let todayBaseline: any[] | null = null;
+      let todayTicketCounts: Record<string, number> | null = null;
       try {
         const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
         const today = getTodayISO();
@@ -116,11 +210,21 @@ Deno.serve(async (req) => {
           yesterdayBaseline = ydData;
         }
 
-        return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline }),
+        // Query DICE API for today's actual ticket sales (using purchasedAfter filter)
+        const todayCountsMap = await fetchTodayTicketCounts(apiKey, today);
+        if (todayCountsMap) {
+          const counts: Record<string, number> = {};
+          for (const [eventId, count] of todayCountsMap) {
+            if (count > 0) counts[eventId] = count;
+          }
+          todayTicketCounts = counts; // empty object = 0 sales, null = query failed
+        }
+
+        return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline, todayTicketCounts }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } catch (snapErr) {
         console.error('Snapshot error:', snapErr);
-        return new Response(JSON.stringify({ success: true, data, todayBaseline: null, yesterdayBaseline: null }),
+        return new Response(JSON.stringify({ success: true, data, todayBaseline: null, yesterdayBaseline: null, todayTicketCounts: null }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     }

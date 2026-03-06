@@ -73,7 +73,7 @@ const Index = () => {
   const todaySalesPerDay = useMemo(
     () =>
       isLatestEdition && selectedEdition
-        ? getTodaySalesPerDay(selectedEdition, snapshots.todayBaseline, snapshots.yesterdayBaseline)
+        ? getTodaySalesPerDay(selectedEdition, snapshots.todayBaseline, snapshots.yesterdayBaseline, snapshots.todayTicketCounts)
         : [],
     [isLatestEdition, selectedEdition, snapshots]
   );
@@ -89,7 +89,7 @@ const Index = () => {
   const todayBreakdown = useMemo(
     () =>
       isLatestEdition && selectedEdition
-        ? getTodaySalesBreakdown(selectedEdition, snapshots.todayBaseline, snapshots.yesterdayBaseline)
+        ? getTodaySalesBreakdown(selectedEdition, snapshots.todayBaseline, snapshots.yesterdayBaseline, snapshots.todayTicketCounts)
         : [],
     [isLatestEdition, selectedEdition, snapshots]
   );
@@ -97,7 +97,7 @@ const Index = () => {
   const todayPresenzeBreakdown = useMemo(
     () =>
       isLatestEdition && selectedEdition
-        ? getTodayPresenzeBreakdown(selectedEdition, snapshots.todayBaseline, snapshots.yesterdayBaseline)
+        ? getTodayPresenzeBreakdown(selectedEdition, snapshots.todayBaseline, snapshots.yesterdayBaseline, snapshots.todayTicketCounts)
         : [],
     [isLatestEdition, selectedEdition, snapshots]
   );

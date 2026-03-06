@@ -11,6 +11,7 @@ export interface SnapshotEntry {
 export interface SnapshotData {
   todayBaseline: SnapshotEntry[] | null;
   yesterdayBaseline: SnapshotEntry[] | null;
+  todayTicketCounts: Record<string, number> | null;
 }
 
 export function useDiceEvents() {
@@ -20,6 +21,7 @@ export function useDiceEvents() {
   const [snapshots, setSnapshots] = useState<SnapshotData>({
     todayBaseline: null,
     yesterdayBaseline: null,
+    todayTicketCounts: null,
   });
   const inFlightRef = useRef(false);
 
@@ -65,6 +67,7 @@ export function useDiceEvents() {
       setSnapshots({
         todayBaseline: data.todayBaseline || null,
         yesterdayBaseline: data.yesterdayBaseline || null,
+        todayTicketCounts: data.todayTicketCounts || null,
       });
     } catch (err) {
       console.error('Error fetching DICE events:', err);
