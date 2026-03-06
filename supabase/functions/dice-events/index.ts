@@ -77,10 +77,13 @@ async function introspectDiceSchema(apiKey: string) {
 
 async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise<Record<string, number> | null> {
   try {
-    // First try: query all orders without filter, check recent ones
+    // Use full ISO datetime with timezone for the filter
+    const todayStart = `${todayISO}T00:00:00Z`;
+    
+    // Try with purchasedAt filter using gte operator
     const query = `{
       viewer {
-        orders(first: 10, sort: { field: PURCHASED_AT, order: DESC }) {
+        orders(first: 50, where: { purchasedAt: { gte: "${todayStart}" } }) {
           totalCount
           edges {
             node {
@@ -102,56 +105,25 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
 
     const ordersNode = data?.data?.viewer?.orders;
     if (!ordersNode) {
-      // Try without sort
-      const query2 = `{
-        viewer {
-          orders(first: 10) {
-            totalCount
-            edges {
-              node {
-                id
-                purchasedAt
-                event { id name }
-                quantity
-              }
-            }
-          }
-        }
-      }`;
-      const { response: r2, data: d2 } = await executeDiceQuery(query2, apiKey);
-      if (!r2.ok) return null;
-      const o2 = d2?.data?.viewer?.orders;
-      if (!o2) {
-        console.error('Orders query error:', JSON.stringify(d2?.errors || d2));
-        return null;
-      }
-      console.log(`Orders (no sort) totalCount: ${o2.totalCount}, edges: ${JSON.stringify(o2.edges?.slice(0, 3))}`);
-      return filterOrdersByDate(o2.edges || [], todayISO);
+      console.error('Orders query error:', JSON.stringify(data?.errors || data));
+      return null;
     }
 
-    console.log(`Orders totalCount: ${ordersNode.totalCount}, recent: ${JSON.stringify(ordersNode.edges?.slice(0, 3))}`);
-    return filterOrdersByDate(ordersNode.edges || [], todayISO);
-  } catch (err) {
-    console.error('fetchTodayTicketCounts error:', err);
-    return null;
-  }
-}
+    console.log(`Today orders (gte ${todayStart}): totalCount=${ordersNode.totalCount}, sample=${JSON.stringify(ordersNode.edges?.slice(0, 3))}`);
 
-function filterOrdersByDate(edges: any[], todayISO: string): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const edge of edges) {
-    const node = edge.node;
-    if (!node?.purchasedAt) continue;
-    const orderDate = node.purchasedAt.substring(0, 10);
-    if (orderDate === todayISO) {
-      const eventId = node.event?.id;
-      const qty = node.quantity || 1;
+    const counts: Record<string, number> = {};
+    for (const edge of (ordersNode.edges || [])) {
+      const eventId = edge.node?.event?.id;
+      const qty = edge.node?.quantity || 1;
       if (eventId) {
         counts[eventId] = (counts[eventId] || 0) + qty;
       }
     }
+    return counts;
+  } catch (err) {
+    console.error('fetchTodayTicketCounts error:', err);
+    return null;
   }
-  return counts;
 }
 
 function getTodayISO(): string {
