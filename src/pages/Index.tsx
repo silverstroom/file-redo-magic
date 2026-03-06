@@ -128,7 +128,7 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-base font-medium text-muted-foreground">{getGreeting()} · {formatToday()}</p>
-            <img src={logoBlack} alt="Color Fest" className="h-8 mt-1" />
+            <img src={logoBlack} alt="Color Fest" className="h-12 mt-1" />
           </div>
           <Button
             onClick={fetchEvents}
