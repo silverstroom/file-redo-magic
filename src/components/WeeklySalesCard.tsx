@@ -140,37 +140,37 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
   if (!totals) return null;
 
   return (
-    <div className="soft-card-purple p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
-      <div className="flex items-start justify-between mb-4">
+    <div className="col-span-2 soft-card-purple p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
         <div>
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ultima settimana</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ultima settimana</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
         </div>
-        <div className="p-2.5 rounded-2xl bg-foreground/5">
-          <CalendarDays className="w-5 h-5 text-muted-foreground" />
-        </div>
-      </div>
-
-      <div className="space-y-2.5 mb-4">
-        <div className="flex items-baseline justify-between">
-          <span className="text-xs text-muted-foreground">Eventi in vendita</span>
-          <span className="text-sm font-bold font-mono">{totals.eventsCount}</span>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-xs text-muted-foreground">Biglietti venduti</span>
-          <span className="text-sm font-bold font-mono">+{totals.biglietti.toLocaleString('it-IT')}</span>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-xs text-muted-foreground">Presenze</span>
-          <span className="text-sm font-bold font-mono">+{totals.presenze.toLocaleString('it-IT')}</span>
+        <div className="p-2 sm:p-2.5 rounded-2xl bg-foreground/5">
+          <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
         </div>
       </div>
 
-      {breakdown.length > 0 && (
-        <div className="pt-3 border-t border-foreground/8 space-y-2">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Dettaglio per tipo</p>
-          {breakdown.map((item, i) => (
-            <div key={i} className="flex items-center justify-between text-[11px]">
+      <div className="grid grid-cols-3 gap-2 sm:gap-0 sm:block sm:space-y-2.5 mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row items-center sm:items-baseline sm:justify-between text-center sm:text-left">
+          <span className="text-[10px] sm:text-xs text-muted-foreground order-2 sm:order-1">Eventi</span>
+          <span className="text-lg sm:text-sm font-bold font-mono order-1 sm:order-2">{totals.eventsCount}</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center sm:items-baseline sm:justify-between text-center sm:text-left">
+          <span className="text-[10px] sm:text-xs text-muted-foreground order-2 sm:order-1">Biglietti</span>
+          <span className="text-lg sm:text-sm font-bold font-mono order-1 sm:order-2">+{totals.biglietti.toLocaleString('it-IT')}</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center sm:items-baseline sm:justify-between text-center sm:text-left">
+          <span className="text-[10px] sm:text-xs text-muted-foreground order-2 sm:order-1">Presenze</span>
+          <span className="text-lg sm:text-sm font-bold font-mono order-1 sm:order-2">+{totals.presenze.toLocaleString('it-IT')}</span>
+        </div>
+      </div>
+
+      {breakdown.length > 0 && breakdown.some(item => item.ticketsDelta > 0) && (
+        <div className="pt-3 border-t border-foreground/8 space-y-1.5 sm:space-y-2">
+          <p className="text-[9px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Dettaglio per tipo</p>
+          {breakdown.filter(item => item.ticketsDelta > 0).map((item, i) => (
+            <div key={i} className="flex items-center justify-between text-[10px] sm:text-[11px]">
               <span className="text-muted-foreground">{item.label}</span>
               <span className="font-mono font-semibold text-foreground">
                 +{item.ticketsDelta} big. → {item.presenzeDelta} pres.
