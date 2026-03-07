@@ -23,6 +23,7 @@ export function useDiceEvents() {
     todayBaseline: null,
     yesterdayBaseline: null,
     todayTicketCounts: null,
+    weeklyTicketCounts: null,
   });
   const inFlightRef = useRef(false);
 
