@@ -250,11 +250,18 @@ Deno.serve(async (req) => {
           todayTicketCounts = todayCounts;
         }
 
-        return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline, todayTicketCounts }),
+        // Get weekly ticket counts from DICE orders API
+        let weeklyTicketCounts: Record<string, number> | null = null;
+        const weeklyCounts = await fetchWeeklyTicketCounts(apiKey, today);
+        if (weeklyCounts && Object.keys(weeklyCounts).length > 0) {
+          weeklyTicketCounts = weeklyCounts;
+        }
+
+        return new Response(JSON.stringify({ success: true, data, todayBaseline, yesterdayBaseline, todayTicketCounts, weeklyTicketCounts }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } catch (snapErr) {
         console.error('Snapshot error:', snapErr);
-        return new Response(JSON.stringify({ success: true, data, todayBaseline: null, yesterdayBaseline: null, todayTicketCounts: null }),
+        return new Response(JSON.stringify({ success: true, data, todayBaseline: null, yesterdayBaseline: null, todayTicketCounts: null, weeklyTicketCounts: null }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     }
