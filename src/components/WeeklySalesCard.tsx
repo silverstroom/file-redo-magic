@@ -26,11 +26,15 @@ function getPresenzeMultiplier(eventName: string): number {
 }
 
 function getTicketCategory(eventName: string): string {
-  if (/(abbonamento|full)/i.test(eventName) && !/1\s*day|one\s*day/i.test(eventName)) return 'Abbonamento';
-  if (/2\s*days?/i.test(eventName)) return '2 Days';
+  if (/(abbonamento|full)/i.test(eventName) && !/1\s*day|one\s*day/i.test(eventName)) return 'Abbonamento 3 giorni';
+  if (/2\s*days?/i.test(eventName)) {
+    const dateMatch = eventName.match(/(\d{1,2})\s*-\s*(\d{1,2})\s*(?:ago|agosto)/i);
+    if (dateMatch) return `2 Days (${dateMatch[1]}-${dateMatch[2]} Ago)`;
+    return '2 Days';
+  }
   const dateMatch = eventName.match(/(\d{1,2})\s*(?:ago|agosto)/i);
-  if (dateMatch) return `${dateMatch[1]} Ago`;
-  return '1 Day';
+  if (dateMatch) return `1 Day - ${dateMatch[1]} Agosto`;
+  return 'Altro';
 }
 
 export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardProps) {
@@ -55,17 +59,15 @@ export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardP
       totalBiglietti += delta;
       totalPresenze += presenze;
 
-      if (delta > 0) {
-        const category = getTicketCategory(event.name);
-        const existing = categoryMap.get(category) || { ticketsDelta: 0, presenzeDelta: 0 };
-        categoryMap.set(category, {
-          ticketsDelta: existing.ticketsDelta + delta,
-          presenzeDelta: existing.presenzeDelta + presenze,
-        });
-      }
+      const category = getTicketCategory(event.name);
+      const existing = categoryMap.get(category) || { ticketsDelta: 0, presenzeDelta: 0 };
+      categoryMap.set(category, {
+        ticketsDelta: existing.ticketsDelta + delta,
+        presenzeDelta: existing.presenzeDelta + presenze,
+      });
     }
 
-    const sortOrder = ['Abbonamento', '2 Days'];
+    const sortOrder = ['Abbonamento 3 giorni'];
     const items = Array.from(categoryMap.entries())
       .map(([label, data]) => ({ label, ...data }))
       .sort((a, b) => {
@@ -74,6 +76,10 @@ export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardP
         if (ai >= 0 && bi >= 0) return ai - bi;
         if (ai >= 0) return -1;
         if (bi >= 0) return 1;
+        const is2DaysA = a.label.startsWith('2 Days');
+        const is2DaysB = b.label.startsWith('2 Days');
+        if (is2DaysA && !is2DaysB) return 1;
+        if (!is2DaysA && is2DaysB) return -1;
         return a.label.localeCompare(b.label);
       });
 
@@ -117,9 +123,9 @@ export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardP
           <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Dettaglio per tipo</p>
           {breakdown.map((item, i) => (
             <div key={i} className="flex items-center justify-between text-[11px]">
-              <span className="text-muted-foreground">{item.label}</span>
-              <span className="font-mono font-semibold text-foreground">
-                +{item.ticketsDelta} big. → {item.presenzeDelta} pres.
+              <span className="text-muted-foreground truncate mr-2">{item.label}</span>
+              <span className="font-mono font-semibold text-foreground whitespace-nowrap">
+                {item.ticketsDelta > 0 ? `+${item.ticketsDelta}` : '0'} big. → {item.presenzeDelta} pres.
               </span>
             </div>
           ))}
