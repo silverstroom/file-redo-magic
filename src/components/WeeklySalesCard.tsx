@@ -123,9 +123,9 @@ export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardP
           <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Dettaglio per tipo</p>
           {breakdown.map((item, i) => (
             <div key={i} className="flex items-center justify-between text-[11px]">
-              <span className="text-muted-foreground">{item.label}</span>
-              <span className="font-mono font-semibold text-foreground">
-                +{item.ticketsDelta} big. → {item.presenzeDelta} pres.
+              <span className="text-muted-foreground truncate mr-2">{item.label}</span>
+              <span className="font-mono font-semibold text-foreground whitespace-nowrap">
+                {item.ticketsDelta > 0 ? `+${item.ticketsDelta}` : '0'} big. → {item.presenzeDelta} pres.
               </span>
             </div>
           ))}
