@@ -44,37 +44,52 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
       if (cfEvents.length === 0) return;
 
       const today = new Date();
-      const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
       const weekAgo = subDays(today, 7);
       const weekAgoStr = weekAgo.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
 
-      // Find baseline snapshot from ~7 days ago
-      const { data: baselineSnaps } = await supabase
+      // Try to find baseline from ~7 days ago
+      const { data: weekAgoSnaps } = await supabase
         .from('ticket_snapshots')
         .select('event_id, event_name, tickets_sold, snapshot_date')
         .lte('snapshot_date', weekAgoStr)
         .order('snapshot_date', { ascending: false })
         .limit(100);
 
-      // Filter only CF14 snapshots
-      const cf14Baseline = (baselineSnaps || []).filter(s => isCF14Event(s.event_name || ''));
+      const cf14WeekAgo = (weekAgoSnaps || []).filter(s => isCF14Event(s.event_name || ''));
+
+      let baselineSnaps = cf14WeekAgo;
+      let baselineDate: Date | null = null;
+
+      if (cf14WeekAgo.length > 0) {
+        baselineDate = new Date(cf14WeekAgo[0].snapshot_date + 'T00:00:00');
+      } else {
+        // No 7-day-old snapshot: use the earliest available snapshot as baseline
+        const { data: earliestSnaps } = await supabase
+          .from('ticket_snapshots')
+          .select('event_id, event_name, tickets_sold, snapshot_date')
+          .order('snapshot_date', { ascending: true })
+          .limit(100);
+
+        const cf14Earliest = (earliestSnaps || []).filter(s => isCF14Event(s.event_name || ''));
+        if (cf14Earliest.length > 0) {
+          baselineSnaps = cf14Earliest;
+          baselineDate = new Date(cf14Earliest[0].snapshot_date + 'T00:00:00');
+        }
+      }
 
       // Build baseline map
       const baselineMap = new Map<string, number>();
-      const hasBaseline = cf14Baseline.length > 0;
-
-      if (hasBaseline) {
-        const seen = new Set<string>();
-        for (const s of cf14Baseline) {
-          if (s.event_id && !seen.has(s.event_id)) {
-            seen.add(s.event_id);
-            baselineMap.set(s.event_id, s.tickets_sold);
-          }
+      const seen = new Set<string>();
+      for (const s of baselineSnaps) {
+        if (s.event_id && !seen.has(s.event_id)) {
+          seen.add(s.event_id);
+          baselineMap.set(s.event_id, s.tickets_sold);
         }
-        const baseDate = new Date(cf14Baseline[0].snapshot_date);
-        setDateLabel(`${format(baseDate, 'd MMM', { locale: it })} - ${format(today, 'd MMM', { locale: it })}`);
+      }
+
+      if (baselineDate) {
+        setDateLabel(`${format(baselineDate, 'd MMM', { locale: it })} - ${format(today, 'd MMM', { locale: it })}`);
       } else {
-        // No baseline: show "Ultima settimana" with live totals
         setDateLabel(`${format(weekAgo, 'd MMM', { locale: it })} - ${format(today, 'd MMM', { locale: it })}`);
       }
 
@@ -83,9 +98,8 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
       const categoryMap = new Map<string, { ticketsDelta: number; presenzeDelta: number }>();
 
       for (const event of cfEvents) {
-        const baselineSold = baselineMap.get(event.id) ?? 0;
-        // If no baseline, use current totals as the delta (all sales happened since tracking started)
-        const delta = hasBaseline ? Math.max(0, event.ticketsSold - baselineSold) : event.ticketsSold;
+        const baselineSold = baselineMap.get(event.id) ?? event.ticketsSold;
+        const delta = Math.max(0, event.ticketsSold - baselineSold);
         const presenze = delta * getPresenzeMultiplier(event.name);
 
         totalBiglietti += delta;
