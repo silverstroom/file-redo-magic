@@ -44,37 +44,52 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
       if (cfEvents.length === 0) return;
 
       const today = new Date();
-      const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
       const weekAgo = subDays(today, 7);
       const weekAgoStr = weekAgo.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
 
-      // Find baseline snapshot from ~7 days ago
-      const { data: baselineSnaps } = await supabase
+      // Try to find baseline from ~7 days ago
+      const { data: weekAgoSnaps } = await supabase
         .from('ticket_snapshots')
         .select('event_id, event_name, tickets_sold, snapshot_date')
         .lte('snapshot_date', weekAgoStr)
         .order('snapshot_date', { ascending: false })
         .limit(100);
 
-      // Filter only CF14 snapshots
-      const cf14Baseline = (baselineSnaps || []).filter(s => isCF14Event(s.event_name || ''));
+      const cf14WeekAgo = (weekAgoSnaps || []).filter(s => isCF14Event(s.event_name || ''));
+
+      let baselineSnaps = cf14WeekAgo;
+      let baselineDate: Date | null = null;
+
+      if (cf14WeekAgo.length > 0) {
+        baselineDate = new Date(cf14WeekAgo[0].snapshot_date + 'T00:00:00');
+      } else {
+        // No 7-day-old snapshot: use the earliest available snapshot as baseline
+        const { data: earliestSnaps } = await supabase
+          .from('ticket_snapshots')
+          .select('event_id, event_name, tickets_sold, snapshot_date')
+          .order('snapshot_date', { ascending: true })
+          .limit(100);
+
+        const cf14Earliest = (earliestSnaps || []).filter(s => isCF14Event(s.event_name || ''));
+        if (cf14Earliest.length > 0) {
+          baselineSnaps = cf14Earliest;
+          baselineDate = new Date(cf14Earliest[0].snapshot_date + 'T00:00:00');
+        }
+      }
 
       // Build baseline map
       const baselineMap = new Map<string, number>();
-      const hasBaseline = cf14Baseline.length > 0;
-
-      if (hasBaseline) {
-        const seen = new Set<string>();
-        for (const s of cf14Baseline) {
-          if (s.event_id && !seen.has(s.event_id)) {
-            seen.add(s.event_id);
-            baselineMap.set(s.event_id, s.tickets_sold);
-          }
+      const seen = new Set<string>();
+      for (const s of baselineSnaps) {
+        if (s.event_id && !seen.has(s.event_id)) {
+          seen.add(s.event_id);
+          baselineMap.set(s.event_id, s.tickets_sold);
         }
-        const baseDate = new Date(cf14Baseline[0].snapshot_date);
-        setDateLabel(`${format(baseDate, 'd MMM', { locale: it })} - ${format(today, 'd MMM', { locale: it })}`);
+      }
+
+      if (baselineDate) {
+        setDateLabel(`${format(baselineDate, 'd MMM', { locale: it })} - ${format(today, 'd MMM', { locale: it })}`);
       } else {
-        // No baseline: show "Ultima settimana" with live totals
         setDateLabel(`${format(weekAgo, 'd MMM', { locale: it })} - ${format(today, 'd MMM', { locale: it })}`);
       }
 
@@ -83,9 +98,8 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
       const categoryMap = new Map<string, { ticketsDelta: number; presenzeDelta: number }>();
 
       for (const event of cfEvents) {
-        const baselineSold = baselineMap.get(event.id) ?? 0;
-        // If no baseline, use current totals as the delta (all sales happened since tracking started)
-        const delta = hasBaseline ? Math.max(0, event.ticketsSold - baselineSold) : event.ticketsSold;
+        const baselineSold = baselineMap.get(event.id) ?? event.ticketsSold;
+        const delta = Math.max(0, event.ticketsSold - baselineSold);
         const presenze = delta * getPresenzeMultiplier(event.name);
 
         totalBiglietti += delta;
@@ -126,37 +140,37 @@ export function WeeklySalesCard({ events }: WeeklySalesCardProps) {
   if (!totals) return null;
 
   return (
-    <div className="soft-card-purple p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
-      <div className="flex items-start justify-between mb-4">
+    <div className="col-span-2 soft-card-purple p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
         <div>
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ultima settimana</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ultima settimana</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
         </div>
-        <div className="p-2.5 rounded-2xl bg-foreground/5">
-          <CalendarDays className="w-5 h-5 text-muted-foreground" />
-        </div>
-      </div>
-
-      <div className="space-y-2.5 mb-4">
-        <div className="flex items-baseline justify-between">
-          <span className="text-xs text-muted-foreground">Eventi in vendita</span>
-          <span className="text-sm font-bold font-mono">{totals.eventsCount}</span>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-xs text-muted-foreground">Biglietti venduti</span>
-          <span className="text-sm font-bold font-mono">+{totals.biglietti.toLocaleString('it-IT')}</span>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-xs text-muted-foreground">Presenze</span>
-          <span className="text-sm font-bold font-mono">+{totals.presenze.toLocaleString('it-IT')}</span>
+        <div className="p-2 sm:p-2.5 rounded-2xl bg-foreground/5">
+          <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
         </div>
       </div>
 
-      {breakdown.length > 0 && (
-        <div className="pt-3 border-t border-foreground/8 space-y-2">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Dettaglio per tipo</p>
-          {breakdown.map((item, i) => (
-            <div key={i} className="flex items-center justify-between text-[11px]">
+      <div className="grid grid-cols-3 gap-2 sm:gap-0 sm:block sm:space-y-2.5 mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row items-center sm:items-baseline sm:justify-between text-center sm:text-left">
+          <span className="text-[10px] sm:text-xs text-muted-foreground order-2 sm:order-1">Eventi</span>
+          <span className="text-lg sm:text-sm font-bold font-mono order-1 sm:order-2">{totals.eventsCount}</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center sm:items-baseline sm:justify-between text-center sm:text-left">
+          <span className="text-[10px] sm:text-xs text-muted-foreground order-2 sm:order-1">Biglietti</span>
+          <span className="text-lg sm:text-sm font-bold font-mono order-1 sm:order-2">+{totals.biglietti.toLocaleString('it-IT')}</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center sm:items-baseline sm:justify-between text-center sm:text-left">
+          <span className="text-[10px] sm:text-xs text-muted-foreground order-2 sm:order-1">Presenze</span>
+          <span className="text-lg sm:text-sm font-bold font-mono order-1 sm:order-2">+{totals.presenze.toLocaleString('it-IT')}</span>
+        </div>
+      </div>
+
+      {breakdown.length > 0 && breakdown.some(item => item.ticketsDelta > 0) && (
+        <div className="pt-3 border-t border-foreground/8 space-y-1.5 sm:space-y-2">
+          <p className="text-[9px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Dettaglio per tipo</p>
+          {breakdown.filter(item => item.ticketsDelta > 0).map((item, i) => (
+            <div key={i} className="flex items-center justify-between text-[10px] sm:text-[11px]">
               <span className="text-muted-foreground">{item.label}</span>
               <span className="font-mono font-semibold text-foreground">
                 +{item.ticketsDelta} big. → {item.presenzeDelta} pres.
