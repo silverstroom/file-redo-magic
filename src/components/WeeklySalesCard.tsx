@@ -59,14 +59,12 @@ export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardP
       totalBiglietti += delta;
       totalPresenze += presenze;
 
-      if (delta > 0) {
-        const category = getTicketCategory(event.name);
-        const existing = categoryMap.get(category) || { ticketsDelta: 0, presenzeDelta: 0 };
-        categoryMap.set(category, {
-          ticketsDelta: existing.ticketsDelta + delta,
-          presenzeDelta: existing.presenzeDelta + presenze,
-        });
-      }
+      const category = getTicketCategory(event.name);
+      const existing = categoryMap.get(category) || { ticketsDelta: 0, presenzeDelta: 0 };
+      categoryMap.set(category, {
+        ticketsDelta: existing.ticketsDelta + delta,
+        presenzeDelta: existing.presenzeDelta + presenze,
+      });
     }
 
     const sortOrder = ['Abbonamento', '2 Days'];
