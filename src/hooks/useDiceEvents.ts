@@ -70,6 +70,7 @@ export function useDiceEvents() {
         todayBaseline: data.todayBaseline || null,
         yesterdayBaseline: data.yesterdayBaseline || null,
         todayTicketCounts: data.todayTicketCounts || null,
+        weeklyTicketCounts: data.weeklyTicketCounts || null,
       });
     } catch (err) {
       console.error('Error fetching DICE events:', err);
