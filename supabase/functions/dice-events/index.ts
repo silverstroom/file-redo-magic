@@ -127,6 +127,70 @@ async function fetchTodayTicketCounts(apiKey: string, todayISO: string): Promise
   }
 }
 
+async function fetchWeeklyTicketCounts(apiKey: string, todayISO: string): Promise<Record<string, number> | null> {
+  try {
+    // Calculate 7 days ago at midnight Rome time in UTC
+    const weekAgoDate = new Date(`${todayISO}T00:00:00`);
+    weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+    const weekAgoISO = weekAgoDate.toISOString().split('T')[0];
+    
+    const midnightLocal = new Date(`${weekAgoISO}T00:00:00`);
+    const romeDate = new Date(midnightLocal.toLocaleString('en-US', { timeZone: 'Europe/Rome' }));
+    const utcDate = new Date(midnightLocal.toLocaleString('en-US', { timeZone: 'UTC' }));
+    const offsetMs = utcDate.getTime() - romeDate.getTime();
+    const weekStartUTC = new Date(midnightLocal.getTime() + offsetMs).toISOString();
+    
+    console.log(`Weekly filter: weekAgoISO=${weekAgoISO}, weekStartUTC=${weekStartUTC}`);
+    
+    const counts: Record<string, number> = {};
+    let hasNextPage = true;
+    let afterCursor: string | null = null;
+
+    while (hasNextPage) {
+      const afterClause = afterCursor ? `, after: "${afterCursor}"` : '';
+      const query = `{
+        viewer {
+          orders(first: 50${afterClause}, where: { purchasedAt: { gte: "${weekStartUTC}" } }) {
+            totalCount
+            pageInfo { hasNextPage endCursor }
+            edges {
+              node {
+                id
+                event { id }
+                quantity
+              }
+            }
+          }
+        }
+      }`;
+
+      const { response, data } = await executeDiceQuery(query, apiKey);
+      if (!response.ok) return null;
+
+      const ordersNode = data?.data?.viewer?.orders;
+      if (!ordersNode) return null;
+
+      for (const edge of (ordersNode.edges || [])) {
+        const eventId = edge.node?.event?.id;
+        const qty = edge.node?.quantity || 1;
+        if (eventId) {
+          counts[eventId] = (counts[eventId] || 0) + qty;
+        }
+      }
+
+      hasNextPage = Boolean(ordersNode.pageInfo?.hasNextPage);
+      afterCursor = ordersNode.pageInfo?.endCursor || null;
+      if (!afterCursor) hasNextPage = false;
+    }
+
+    console.log(`Weekly orders counts:`, JSON.stringify(counts));
+    return counts;
+  } catch (err) {
+    console.error('fetchWeeklyTicketCounts error:', err);
+    return null;
+  }
+}
+
 function getTodayISO(): string {
   const now = new Date();
   return now.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
