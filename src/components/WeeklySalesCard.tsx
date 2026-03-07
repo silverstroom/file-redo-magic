@@ -67,7 +67,7 @@ export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardP
       });
     }
 
-    const sortOrder = ['Abbonamento', '2 Days'];
+    const sortOrder = ['Abbonamento 3 giorni'];
     const items = Array.from(categoryMap.entries())
       .map(([label, data]) => ({ label, ...data }))
       .sort((a, b) => {
@@ -76,6 +76,10 @@ export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardP
         if (ai >= 0 && bi >= 0) return ai - bi;
         if (ai >= 0) return -1;
         if (bi >= 0) return 1;
+        const is2DaysA = a.label.startsWith('2 Days');
+        const is2DaysB = b.label.startsWith('2 Days');
+        if (is2DaysA && !is2DaysB) return 1;
+        if (!is2DaysA && is2DaysB) return -1;
         return a.label.localeCompare(b.label);
       });
 
