@@ -26,11 +26,15 @@ function getPresenzeMultiplier(eventName: string): number {
 }
 
 function getTicketCategory(eventName: string): string {
-  if (/(abbonamento|full)/i.test(eventName) && !/1\s*day|one\s*day/i.test(eventName)) return 'Abbonamento';
-  if (/2\s*days?/i.test(eventName)) return '2 Days';
+  if (/(abbonamento|full)/i.test(eventName) && !/1\s*day|one\s*day/i.test(eventName)) return 'Abbonamento 3 giorni';
+  if (/2\s*days?/i.test(eventName)) {
+    const dateMatch = eventName.match(/(\d{1,2})\s*-\s*(\d{1,2})\s*(?:ago|agosto)/i);
+    if (dateMatch) return `2 Days (${dateMatch[1]}-${dateMatch[2]} Ago)`;
+    return '2 Days';
+  }
   const dateMatch = eventName.match(/(\d{1,2})\s*(?:ago|agosto)/i);
-  if (dateMatch) return `${dateMatch[1]} Ago`;
-  return '1 Day';
+  if (dateMatch) return `1 Day - ${dateMatch[1]} Agosto`;
+  return 'Altro';
 }
 
 export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardProps) {
