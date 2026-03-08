@@ -92,35 +92,35 @@ export function WeeklySalesCard({ events, weeklyTicketCounts }: WeeklySalesCardP
   if (!totals) return null;
 
   return (
-    <div className="col-span-2 soft-card-purple p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
+    <div className="col-span-2 soft-card p-4 sm:p-5 transition-all duration-200 hover:shadow-md">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ultima settimana</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Ultima settimana</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">{dateLabel}</p>
         </div>
-        <div className="p-2 rounded-2xl bg-foreground/5">
+        <div className="p-2 rounded-xl bg-foreground/[0.04]">
           <CalendarDays className="w-4 h-4 text-muted-foreground" />
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-3">
         <div className="text-center">
-          <p className="text-xl font-bold font-mono">{totals.eventsCount}</p>
+          <p className="text-lg font-bold font-mono">{totals.eventsCount}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">Eventi</p>
         </div>
         <div className="text-center">
-          <p className="text-xl font-bold font-mono">+{totals.biglietti.toLocaleString('it-IT')}</p>
+          <p className="text-lg font-bold font-mono text-primary">+{totals.biglietti.toLocaleString('it-IT')}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">Biglietti</p>
         </div>
         <div className="text-center">
-          <p className="text-xl font-bold font-mono">+{totals.presenze.toLocaleString('it-IT')}</p>
+          <p className="text-lg font-bold font-mono">+{totals.presenze.toLocaleString('it-IT')}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">Presenze</p>
         </div>
       </div>
 
       {breakdown.length > 0 && (
-        <div className="pt-3 border-t border-foreground/8 space-y-1.5">
-          <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Dettaglio per tipo</p>
+        <div className="pt-3 border-t border-border/50 space-y-1.5">
+          <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Dettaglio per tipo</p>
           {breakdown.map((item, i) => (
             <div key={i} className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground truncate mr-2">{item.label}</span>
