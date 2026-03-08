@@ -21,28 +21,28 @@ export function StatCard({ title, value, subtitle, icon, colorClass = 'text-prim
     : null;
 
   return (
-    <div className={`${cardStyle || 'soft-card'} p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-md`}>
+    <div className={`${cardStyle || 'soft-card'} p-4 transition-all duration-200 hover:shadow-md`}>
       <div className="flex items-start justify-between">
-        <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
-          <p className={`text-3xl font-extrabold font-mono tracking-tight ${colorClass}`}>
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{title}</p>
+          <p className={`text-2xl font-extrabold font-mono tracking-tight ${colorClass}`}>
             {typeof value === 'number' ? value.toLocaleString('it-IT') : value}
           </p>
           {subtitle && (
-            <p className="text-[11px] text-muted-foreground mt-1">{subtitle}</p>
+            <p className="text-[11px] text-muted-foreground">{subtitle}</p>
           )}
         </div>
         {icon && (
-          <div className={`p-2.5 rounded-2xl bg-foreground/5 ${colorClass}`}>
+          <div className={`p-2 rounded-xl bg-foreground/[0.04] ${colorClass}`}>
             {icon}
           </div>
         )}
       </div>
 
       {todaySales !== null && todaySales !== undefined && (
-        <div className="mt-3 pt-3 border-t border-foreground/5">
+        <div className="mt-3 pt-3 border-t border-border/50">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <p className="text-[10px] font-medium text-muted-foreground">
               {todayLabel || 'Venduti oggi'}
             </p>
             <div className="flex items-center gap-1.5">

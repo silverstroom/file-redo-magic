@@ -123,19 +123,19 @@ const Index = () => {
   const totalSoldYesterday = todaySalesPerDay.reduce((s, d) => s + d.soldYesterday, 0);
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <header className="px-5 pt-8 pb-6">
+    <div className="min-h-screen bg-background pb-20">
+      <header className="px-5 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-base font-medium text-muted-foreground">{getGreeting()} · {formatToday()}</p>
-            <img src={logoBlack} alt="Color Fest" className="h-12 mt-1" />
+            <p className="text-sm text-muted-foreground">{getGreeting()} · {formatToday()}</p>
+            <img src={logoBlack} alt="Color Fest" className="h-10 mt-1" />
           </div>
           <Button
             onClick={fetchEvents}
             disabled={loading}
             variant="outline"
             size="icon"
-            className="rounded-2xl h-10 w-10 shadow-sm"
+            className="rounded-full h-10 w-10 border-border"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -144,12 +144,12 @@ const Index = () => {
         {editions.length > 0 && (
           <div className="mt-4">
             <Select value={selectedEditionKey || ''} onValueChange={setSelectedEditionKey}>
-              <SelectTrigger className="w-full rounded-2xl bg-card border-border/40 font-semibold shadow-sm h-12">
+              <SelectTrigger className="w-full rounded-xl bg-card border-border font-semibold h-11">
                 <SelectValue placeholder="Seleziona un'edizione..." />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl">
+              <SelectContent className="rounded-xl">
                 {editions.map((edition) => (
-                  <SelectItem key={edition.key} value={edition.key} className="rounded-xl">
+                  <SelectItem key={edition.key} value={edition.key} className="rounded-lg">
                     {edition.label} ({edition.events.length} eventi)
                   </SelectItem>
                 ))}
@@ -159,9 +159,7 @@ const Index = () => {
         )}
       </header>
 
-      <main className="px-5 space-y-5">
-        
-
+      <main className="px-5 space-y-4">
         {error && (
           <div className="soft-card-pink p-4">
             <p className="text-sm text-destructive font-medium">Errore: {error}</p>
@@ -170,7 +168,7 @@ const Index = () => {
 
         {loading && (
           <div className="flex items-center justify-center py-16">
-            <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            <RefreshCw className="w-6 h-6 animate-spin text-primary" />
           </div>
         )}
 
@@ -181,7 +179,7 @@ const Index = () => {
                 title="Biglietti"
                 value={totalTickets}
                 subtitle="Totali venduti"
-                icon={<Ticket className="w-5 h-5" />}
+                icon={<Ticket className="w-4 h-4" />}
                 colorClass="text-primary"
                 cardStyle="soft-card-blue"
                 todaySales={
@@ -196,8 +194,8 @@ const Index = () => {
                 title="Presenze"
                 value={totalPresenze}
                 subtitle="Somma giornaliere"
-                icon={<Users className="w-5 h-5" />}
-                colorClass="text-secondary"
+                icon={<Users className="w-4 h-4" />}
+                colorClass="text-foreground"
                 cardStyle="soft-card-yellow"
                 todaySales={
                   isLatestEdition && (snapshots.todayBaseline || snapshots.yesterdayBaseline)
@@ -214,8 +212,8 @@ const Index = () => {
                   title={day.day}
                   value={day.count}
                   subtitle={`Presenze ${day.day}`}
-                  icon={<CalendarDays className="w-5 h-5" />}
-                  colorClass={i === 0 ? 'text-primary' : i === 1 ? 'text-secondary' : 'text-muted-foreground'}
+                  icon={<CalendarDays className="w-4 h-4" />}
+                  colorClass="text-foreground"
                   cardStyle={CARD_STYLES[(i + 2) % CARD_STYLES.length]}
                   todaySales={
                     isLatestEdition && (snapshots.todayBaseline || snapshots.yesterdayBaseline)
@@ -227,11 +225,9 @@ const Index = () => {
               {isLatestEdition && <WeeklySalesCard events={selectedEdition.events} weeklyTicketCounts={snapshots.weeklyTicketCounts} />}
             </div>
 
-            
-
             <DayBarChart distribution={distribution} />
 
-            <div className="space-y-5">
+            <div className="space-y-4">
               <TicketTypeTable rows={ticketRows} />
               <DayDistributionTable distribution={distribution} />
             </div>
@@ -243,9 +239,9 @@ const Index = () => {
         )}
 
         {!selectedEdition && !loading && events.length === 0 && (
-          <div className="text-center py-16 soft-card">
-            <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nessun dato disponibile</h3>
+          <div className="text-center py-16 soft-card p-8">
+            <BarChart3 className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-base font-bold mb-2">Nessun dato disponibile</h3>
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
               Clicca il pulsante di aggiornamento per caricare i dati.
             </p>
