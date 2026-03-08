@@ -61,15 +61,15 @@ const Obiettivo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <header className="px-5 pt-8 pb-6">
+    <div className="min-h-screen bg-background pb-20">
+      <header className="px-5 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-primary/10">
-              <Target className="w-6 h-6 text-primary" />
+            <div className="p-2.5 rounded-xl bg-primary/10">
+              <Target className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Obiettivo</h1>
+              <h1 className="text-xl font-bold tracking-tight">Obiettivo</h1>
               <p className="text-xs text-muted-foreground">
                 {cf14Edition ? cf14Edition.label : 'Color Fest 14'}
               </p>
@@ -80,7 +80,7 @@ const Obiettivo = () => {
             disabled={loading}
             variant="outline"
             size="icon"
-            className="rounded-2xl h-10 w-10 shadow-sm"
+            className="rounded-full h-10 w-10 border-border"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -88,24 +88,24 @@ const Obiettivo = () => {
       </header>
 
       <main className="px-5 space-y-4">
-        <div className="soft-card-blue p-4">
+        <div className="soft-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground">Obiettivo presenze</span>
+            <span className="text-xs font-medium text-muted-foreground">Obiettivo presenze</span>
             {editing ? (
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
                   value={tempGoal}
                   onChange={(e) => setTempGoal(e.target.value)}
-                  className="w-28 h-8 text-sm font-mono rounded-xl"
+                  className="w-28 h-8 text-sm font-mono rounded-lg"
                   min={1}
                 />
-                <Button size="sm" variant="ghost" onClick={saveGoal} className="rounded-xl">
+                <Button size="sm" variant="ghost" onClick={saveGoal} className="rounded-lg">
                   <Check className="w-4 h-4" />
                 </Button>
               </div>
             ) : (
-              <Button size="sm" variant="ghost" onClick={() => { setTempGoal(goal.toString()); setEditing(true); }} className="gap-1 rounded-xl">
+              <Button size="sm" variant="ghost" onClick={() => { setTempGoal(goal.toString()); setEditing(true); }} className="gap-1 rounded-lg">
                 <span className="font-mono font-bold">{goal.toLocaleString('it-IT')}</span>
                 <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
               </Button>
@@ -117,11 +117,11 @@ const Obiettivo = () => {
           <h2 className="text-base font-bold text-center mb-2">Stato di Avanzamento</h2>
           {loading ? (
             <div className="w-64 h-64 flex items-center justify-center mx-auto">
-              <Target className="w-8 h-8 animate-spin text-primary" />
+              <Target className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : (
             <>
-              <div className="relative mx-auto" style={{ width: 260, height: 260 }}>
+              <div className="relative mx-auto" style={{ width: 240, height: 240 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <RadialBarChart
                     cx="50%" cy="50%"
@@ -130,12 +130,12 @@ const Obiettivo = () => {
                     startAngle={90}
                     endAngle={-270}
                     data={chartData}
-                    barSize={18}
+                    barSize={16}
                   >
                     <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
                     <RadialBar
                       dataKey="value"
-                      cornerRadius={12}
+                      cornerRadius={10}
                       background={{ fill: 'hsl(var(--muted))' }}
                       angleAxisId={0}
                     />
@@ -149,24 +149,24 @@ const Obiettivo = () => {
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2.5">
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30">
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
                   <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
                     <Users className="w-4 h-4" /> Presenze totali
                   </span>
                   <span className="font-mono font-bold">{totalPresenze.toLocaleString('it-IT')}</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
                   <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
                     <Ticket className="w-4 h-4" /> Biglietti venduti
                   </span>
                   <span className="font-mono font-bold">{currentTickets.toLocaleString('it-IT')}</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
                   <span className="text-xs font-medium text-muted-foreground">Obiettivo</span>
                   <span className="font-mono font-bold">{goal.toLocaleString('it-IT')}</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-2xl" style={{ backgroundColor: `${color}12`, border: `1px solid ${color}25` }}>
+                <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: `${color}12`, border: `1px solid ${color}25` }}>
                   <span className="text-xs font-medium" style={{ color }}>Mancanti</span>
                   <span className="font-mono font-bold" style={{ color }}>
                     {Math.max(0, goal - totalPresenze).toLocaleString('it-IT')}

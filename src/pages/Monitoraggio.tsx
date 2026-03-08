@@ -14,11 +14,11 @@ import { LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tool
 import { toast } from 'sonner';
 
 const EDITIONS = [
-  { key: 'CF14', label: 'CF 14', year: 2026, color: 'hsl(220, 90%, 55%)' },
-  { key: 'CF13', label: 'CF 13', year: 2025, color: 'hsl(42, 95%, 55%)' },
-  { key: 'CF12', label: 'CF 12', year: 2024, color: 'hsl(280, 60%, 55%)' },
-  { key: 'CF11', label: 'CF 11', year: 2023, color: 'hsl(160, 60%, 45%)' },
-  { key: 'CF10', label: 'CF 10', year: 2022, color: 'hsl(350, 75%, 55%)' },
+  { key: 'CF14', label: 'CF 14', year: 2026, color: 'hsl(349, 100%, 61%)' },
+  { key: 'CF13', label: 'CF 13', year: 2025, color: 'hsl(174, 72%, 40%)' },
+  { key: 'CF12', label: 'CF 12', year: 2024, color: 'hsl(36, 100%, 50%)' },
+  { key: 'CF11', label: 'CF 11', year: 2023, color: 'hsl(210, 80%, 52%)' },
+  { key: 'CF10', label: 'CF 10', year: 2022, color: 'hsl(270, 60%, 55%)' },
 ];
 
 const CURRENT_YEAR = 2026;
@@ -284,7 +284,6 @@ const Monitoraggio = () => {
           }
           dailyData.sort((a, b) => a.sale_date.localeCompare(b.sale_date));
 
-          // Use live API data for CF14 totals (snapshot history is too short for range-based)
           const cfLiveEvents = eventsRef.current.filter(e => /color\s*fest\s*14/i.test(e.name));
           const liveBiglietti = cfLiveEvents.reduce((s, e) => s + e.ticketsSold, 0);
           const livePresenze = cfLiveEvents.reduce((s, e) => s + e.ticketsSold * getPresenzeMultiplier(e.name), 0);
@@ -352,17 +351,17 @@ const Monitoraggio = () => {
     }));
   }, [editionResults]);
 
-  const CARD_STYLES_MON = ['soft-card-blue', 'soft-card-yellow', 'soft-card-purple', 'soft-card-mint', 'soft-card-pink'];
+  const CARD_STYLES_MON = ['soft-card-pink', 'soft-card-blue', 'soft-card-yellow', 'soft-card-mint', 'soft-card-purple'];
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <header className="px-5 pt-8 pb-6">
+    <div className="min-h-screen bg-background pb-20">
+      <header className="px-5 pt-6 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-primary/10">
-            <ArrowRightLeft className="w-6 h-6 text-primary" />
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <ArrowRightLeft className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Monitoraggio</h1>
+            <h1 className="text-xl font-bold tracking-tight">Monitoraggio</h1>
             <p className="text-xs text-muted-foreground">Confronto presenze e biglietti YoY</p>
           </div>
         </div>
@@ -370,18 +369,18 @@ const Monitoraggio = () => {
 
       <main className="px-5 space-y-4">
         {hasData === false && (
-          <div className="soft-card-orange p-6 text-center space-y-4">
-            <Upload className="w-10 h-10 text-primary mx-auto" />
+          <div className="soft-card p-6 text-center space-y-4">
+            <Upload className="w-8 h-8 text-primary mx-auto" />
             <h3 className="text-base font-bold">Importa dati storici</h3>
             <p className="text-xs text-muted-foreground max-w-md mx-auto">
               Importa il CSV delle transazioni DICE per il confronto tra edizioni.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button onClick={importBundled} disabled={importing} className="gap-2 rounded-2xl">
+              <Button onClick={importBundled} disabled={importing} className="gap-2 rounded-xl">
                 <Upload className="w-4 h-4" />
                 {importing ? 'Importazione...' : 'Importa dati inclusi'}
               </Button>
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing} className="gap-2 rounded-2xl">
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing} className="gap-2 rounded-xl">
                 <Upload className="w-4 h-4" />
                 Carica CSV
               </Button>
@@ -397,10 +396,10 @@ const Monitoraggio = () => {
                 <button
                   key={idx}
                   onClick={() => handlePresetClick(idx)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     activePreset === idx
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-foreground/5 text-foreground hover:bg-foreground/10'
+                      ? 'bg-foreground text-background'
+                      : 'bg-muted text-foreground hover:bg-border'
                   }`}
                 >
                   {preset.label}
@@ -409,17 +408,17 @@ const Monitoraggio = () => {
               <Popover open={customCalendarOpen} onOpenChange={setCustomCalendarOpen}>
                 <PopoverTrigger asChild>
                   <button
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
                       activePreset === -1
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'bg-foreground/5 text-foreground hover:bg-foreground/10'
+                        ? 'bg-foreground text-background'
+                        : 'bg-muted text-foreground hover:bg-border'
                     }`}
                   >
                     <CalendarRange className="w-3 h-3" />
                     Personalizzato
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 rounded-2xl" align="start">
+                <PopoverContent className="w-auto p-0 rounded-xl" align="start">
                   <Calendar
                     mode="range"
                     selected={dateRange}
@@ -438,7 +437,7 @@ const Monitoraggio = () => {
                 <span className="font-medium">{dateLabel}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing} className="gap-1 text-[10px] rounded-xl h-7">
+                <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing} className="gap-1 text-[10px] rounded-lg h-7">
                   <Upload className="w-3 h-3" />
                   CSV
                 </Button>
@@ -454,7 +453,7 @@ const Monitoraggio = () => {
 
         {loading && (
           <div className="flex justify-center py-12">
-            <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            <RefreshCw className="w-6 h-6 animate-spin text-primary" />
           </div>
         )}
 
@@ -506,7 +505,7 @@ const Monitoraggio = () => {
                     </div>
 
                     {idx > 0 && diffPresenze !== null && result.totalPresenze > 0 && (
-                      <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-[10px] font-semibold ${
+                      <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                         isUp ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                         isDown ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                         'bg-muted text-muted-foreground'
@@ -532,19 +531,19 @@ const Monitoraggio = () => {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip
-                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 16 }}
+                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12 }}
                     formatter={(value: number, name: string) => [
                       value.toLocaleString('it-IT'),
                       name === 'presenze' ? 'Presenze' : 'Biglietti'
                     ]}
                   />
                   <Legend formatter={(value) => value === 'presenze' ? 'Presenze' : 'Biglietti'} />
-                  <Bar dataKey="presenze" radius={[10, 10, 0, 0]}>
+                  <Bar dataKey="presenze" radius={[8, 8, 0, 0]}>
                     {barChartData.map((entry, i) => (
                       <Cell key={i} fill={entry.fill} />
                     ))}
                   </Bar>
-                  <Bar dataKey="biglietti" radius={[10, 10, 0, 0]} opacity={0.5}>
+                  <Bar dataKey="biglietti" radius={[8, 8, 0, 0]} opacity={0.5}>
                     {barChartData.map((entry, i) => (
                       <Cell key={i} fill={entry.fill} />
                     ))}
@@ -562,7 +561,7 @@ const Monitoraggio = () => {
                     <XAxis dataKey="day" tick={{ fontSize: 9 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip
-                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 16 }}
+                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12 }}
                       formatter={(value: number, name: string) => {
                         const ed = EDITIONS.find(e => e.key === name);
                         return [value.toLocaleString('it-IT'), ed?.label || name];
@@ -589,17 +588,17 @@ const Monitoraggio = () => {
             )}
 
             <div className="soft-card overflow-hidden">
-              <div className="p-4 border-b border-border/30">
+              <div className="p-4 border-b border-border">
                 <h3 className="text-sm font-bold">Riepilogo</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border/30">
-                      <th className="text-left py-2 px-3 text-[10px] font-semibold text-muted-foreground uppercase">Edizione</th>
-                      <th className="text-right py-2 px-3 text-[10px] font-semibold text-muted-foreground uppercase">Biglietti</th>
-                      <th className="text-right py-2 px-3 text-[10px] font-semibold text-muted-foreground uppercase">Presenze</th>
-                      <th className="text-right py-2 px-3 text-[10px] font-semibold text-muted-foreground uppercase">vs CF14</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-muted-foreground uppercase">Edizione</th>
+                      <th className="text-right py-2.5 px-3 text-[10px] font-semibold text-muted-foreground uppercase">Biglietti</th>
+                      <th className="text-right py-2.5 px-3 text-[10px] font-semibold text-muted-foreground uppercase">Presenze</th>
+                      <th className="text-right py-2.5 px-3 text-[10px] font-semibold text-muted-foreground uppercase">vs CF14</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -608,18 +607,18 @@ const Monitoraggio = () => {
                         ? ((cf14TotalPresenze - result.totalPresenze) / result.totalPresenze * 100)
                         : null;
                       return (
-                        <tr key={result.edition.key} className="border-b border-border/20">
-                          <td className="py-2 px-3 font-semibold text-xs flex items-center gap-1.5">
+                        <tr key={result.edition.key} className="border-b border-border/50">
+                          <td className="py-2.5 px-3 font-semibold text-xs flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: result.edition.color }} />
                             {result.edition.label}
                           </td>
-                          <td className="text-right py-2 px-3 font-mono font-bold text-xs">
+                          <td className="text-right py-2.5 px-3 font-mono font-bold text-xs">
                             {result.totalBiglietti.toLocaleString('it-IT')}
                           </td>
-                          <td className="text-right py-2 px-3 font-mono font-bold text-xs">
+                          <td className="text-right py-2.5 px-3 font-mono font-bold text-xs">
                             {result.totalPresenze.toLocaleString('it-IT')}
                           </td>
-                          <td className="text-right py-2 px-3 font-mono text-[10px]">
+                          <td className="text-right py-2.5 px-3 font-mono text-[10px]">
                             {idx === 0 ? '—' : diff !== null ? (
                               <span className={diff >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
                                 {diff >= 0 ? '+' : ''}{diff.toFixed(1)}%
@@ -638,7 +637,7 @@ const Monitoraggio = () => {
 
         {!loading && editionResults.length === 0 && hasData && (
           <div className="soft-card p-10 text-center">
-            <ArrowRightLeft className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <ArrowRightLeft className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground text-sm">
               Seleziona un periodo e premi "Confronta".
             </p>

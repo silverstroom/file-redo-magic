@@ -8,13 +8,13 @@ interface Props {
 }
 
 const PIE_COLORS = [
-  'hsl(220, 90%, 55%)',
-  'hsl(42, 95%, 55%)',
-  'hsl(280, 60%, 55%)',
-  'hsl(160, 60%, 45%)',
-  'hsl(350, 75%, 55%)',
-  'hsl(30, 90%, 55%)',
-  'hsl(190, 70%, 50%)',
+  'hsl(349, 100%, 61%)',
+  'hsl(174, 72%, 40%)',
+  'hsl(36, 100%, 50%)',
+  'hsl(210, 80%, 52%)',
+  'hsl(270, 60%, 55%)',
+  'hsl(25, 95%, 50%)',
+  'hsl(190, 70%, 45%)',
 ];
 
 function DayChart({ day }: { day: DailySalesDetail }) {
@@ -27,15 +27,15 @@ function DayChart({ day }: { day: DailySalesDetail }) {
 
   return (
     <div className="flex items-center gap-4">
-      <div className="w-[140px] h-[140px] flex-shrink-0">
+      <div className="w-[130px] h-[130px] flex-shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={36}
-              outerRadius={62}
+              innerRadius={34}
+              outerRadius={58}
               dataKey="value"
               stroke="none"
             >
@@ -48,7 +48,7 @@ function DayChart({ day }: { day: DailySalesDetail }) {
               contentStyle={{
                 background: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
-                borderRadius: '16px',
+                borderRadius: '12px',
                 fontSize: '11px',
               }}
             />
@@ -78,9 +78,9 @@ export function DailySalesBreakdown({ breakdown }: Props) {
 
   return (
     <div className="soft-card">
-      <div className="p-5 border-b border-border/30">
+      <div className="p-5 border-b border-border">
         <div className="flex items-center gap-2">
-          <ShoppingBag className="w-5 h-5 text-primary" />
+          <ShoppingBag className="w-4 h-4 text-primary" />
           <h3 className="font-bold text-base">Dettaglio vendite giornaliere</h3>
         </div>
         <p className="text-[11px] text-muted-foreground mt-1">
@@ -98,7 +98,7 @@ export function DailySalesBreakdown({ breakdown }: Props) {
             </h4>
             <DayChart day={day} />
 
-            <div className="rounded-2xl border border-border/30 overflow-hidden mt-3">
+            <div className="rounded-xl border border-border overflow-hidden mt-3">
               <Table>
                 <TableHeader>
                   <TableRow>
